@@ -1,0 +1,17 @@
+services:
+  app:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+
+  web:
+    environment:
+      - NGINX_PORT=80
+
+  node:
+    stdin_open: true
+    tty: true
+
+  database:
+    ports:
+      - "${FORWARD_DB_PORT:-5433}:5432"

@@ -1,0 +1,31 @@
+services:
+  app:
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    restart: always
+
+  web:
+    restart: always
+
+  node:
+    profiles: ["donotstart"] # In production, assets are pre-built, node container is not needed at runtime
+
+  database:
+    restart: always
+    ports: [] # Do not expose database port to host in production
+
+  redis:
+    restart: always
+
+  queue:
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    restart: always
+
+  scheduler:
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+    restart: always
