@@ -20,6 +20,20 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     return config;
 });
 
+// Response interceptor to handle unauthenticated sessions gracefully
+api.interceptors.response.use(
+    (response) => response,
+    (error: AxiosError) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('dailyflow_token');
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 // Helper to ensure CSRF cookie is set before mutative requests
 export async function getCsrfCookie(): Promise<void> {
     try {
