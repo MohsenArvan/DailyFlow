@@ -15,6 +15,12 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, title: 'امروز' },
     },
     {
+        path: '/dashboard',
+        name: 'dashboard',
+        component: () => import('@/views/DashboardView.vue'),
+        meta: { requiresAuth: true, title: 'داشبورد' },
+    },
+    {
         path: '/inbox',
         name: 'inbox',
         component: () => import('@/views/InboxView.vue'),

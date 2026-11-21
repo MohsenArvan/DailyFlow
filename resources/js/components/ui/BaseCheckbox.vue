@@ -5,6 +5,7 @@ import { Check } from 'lucide-vue-next';
 interface Props {
     modelValue?: boolean;
     label?: string;
+    ariaLabel?: string;
     priority?: 'urgent' | 'high' | 'medium' | 'low' | 'none';
     disabled?: boolean;
     id?: string;
@@ -58,6 +59,7 @@ const priorityBorderColor = computed(() => {
             type="button"
             role="checkbox"
             :id="checkboxId"
+            :aria-label="ariaLabel"
             :aria-checked="modelValue"
             :disabled="disabled"
             class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/40"

@@ -1,35 +1,25 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { useAgendaDates } from '@/composables/useAgendaDates';
 import { useTaskStore } from '@/stores/tasks';
 import AppLayout from '@/components/layout/AppLayout.vue';
 import BaseProgressBar from '@/components/ui/BaseProgressBar.vue';
 import TaskQuickAdd from '@/components/task/TaskQuickAdd.vue';
 import TaskList from '@/components/task/TaskList.vue';
-import { Calendar, CheckCircle2, Sparkles, Loader2 } from 'lucide-vue-next';
+import { Calendar, Sparkles, Loader2 } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const taskStore = useTaskStore();
 
-const formatLocalDate = (d: Date = new Date()): string => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
-
-const todayDateString = formatLocalDate();
-
-const todayFormatted = computed(() => {
-    const isJalali = authStore.userPreferences?.date_format !== 'gregorian';
-    const locale = isJalali ? 'fa-IR' : 'en-US';
-    return new Intl.DateTimeFormat(locale, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    }).format(new Date());
-});
+const { localDate, formatDay } = useAgendaDates();
+const todayDateString = computed(() => localDate());
+const todayFormatted = computed(() => formatDay(todayDateString.value));
+const focus = ref(false);
+const scheduled = computed(() => taskStore.pendingTasks.filter(task => task.is_today && task.due_time)
+    .sort((a, b) => (a.due_time ?? '').localeCompare(b.due_time ?? '')));
+const flexible = computed(() => taskStore.pendingTasks.filter(task => task.is_today && !task.due_time));
+const focusedTask = computed(() => [...scheduled.value, ...flexible.value].slice(0, 1));
 
 const dailyGoal = computed(() => authStore.userPreferences?.daily_goal || 5);
 const completedToday = computed(() => taskStore.counts.today_completed ?? 0);
@@ -74,8 +64,12 @@ onMounted(async () => {
             </div>
         </div>
 
+        <button type="button" class="mb-4 rounded-lg border border-zinc-400 px-3 py-2 text-sm" :aria-pressed="focus" @click="focus = !focus">
+            حالت تمرکز
+        </button>
+
         <!-- Quick Add Form -->
-        <div class="mb-6">
+        <div v-if="!focus" class="mb-6">
             <TaskQuickAdd :default-due-date="todayDateString" />
         </div>
 
@@ -84,9 +78,23 @@ onMounted(async () => {
             <Loader2 class="w-7 h-7 animate-spin text-brand-500" />
         </div>
 
+        <div v-else-if="focus || scheduled.length || flexible.length" class="space-y-5">
+            <TaskList v-if="focus" :tasks="focusedTask" empty-title="کاری برای تمرکز باقی نمانده است" />
+            <template v-else>
+                <section v-if="scheduled.length">
+                    <h3 class="mb-2 font-semibold">زمان‌بندی‌شده</h3>
+                    <TaskList :tasks="scheduled" />
+                </section>
+                <section v-if="flexible.length">
+                    <h3 class="mb-2 font-semibold">بدون ساعت مشخص</h3>
+                    <TaskList :tasks="flexible" />
+                </section>
+            </template>
+        </div>
+
         <TaskList
             v-else
-            :tasks="taskStore.tasks"
+            :tasks="[]"
             empty-title="همه کارهای امروز انجام شده‌اند یا تسکی ثبت نشده"
             empty-description="برای برنامه‌ریزی روز پرانرژی، اولین کار امروزتان را با فرم بالا یا کلید Q اضافه کنید."
         />

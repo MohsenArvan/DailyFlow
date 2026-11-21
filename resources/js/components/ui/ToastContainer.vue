@@ -26,7 +26,7 @@ const { toasts, remove } = useToast();
                         toast.type === 'warning' ? 'border-amber-500/30 text-amber-900 dark:text-amber-100' : '',
                         toast.type === 'info' ? 'border-brand-500/30 text-brand-900 dark:text-brand-100' : '',
                     ]"
-                    role="alert"
+                    role="status"
                 >
                     <!-- Type Icon -->
                     <div class="shrink-0 mt-0.5">
@@ -46,7 +46,7 @@ const { toasts, remove } = useToast();
                         type="button"
                         @click="remove(toast.id)"
                         class="p-0.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
-                        title="بستن"
+                        title="بستن" aria-label="بستن پیام"
                     >
                         <X class="w-3.5 h-3.5" />
                     </button>

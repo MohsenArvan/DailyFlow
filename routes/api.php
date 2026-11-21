@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\ExportController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ProjectController;
+use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\SubtaskController;
 use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -33,6 +37,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/profile', [UserController::class, 'updateProfile']);
         Route::put('/preferences', [UserController::class, 'updatePreferences']);
         Route::put('/password', [UserController::class, 'updatePassword']);
+    });
+
+    Route::get('/search', SearchController::class);
+    Route::get('/user/export', ExportController::class);
+    Route::get('/notifications/unread', [NotificationController::class, 'unread']);
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'read'])->whereUuid('id');
+
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/summary', [DashboardController::class, 'summary']);
+        Route::get('/velocity', [DashboardController::class, 'velocity']);
+        Route::get('/metrics', [DashboardController::class, 'summary']);
+        Route::get('/weekly-velocity', [DashboardController::class, 'velocity']);
     });
 
     // Tasks API

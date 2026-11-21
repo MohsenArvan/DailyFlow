@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useDialogFocus } from '@/composables/useDialogFocus';
 import { ref, watch, computed } from 'vue';
 import { useProjectStore } from '@/stores/projects';
 import BaseInput from '@/components/ui/BaseInput.vue';
@@ -108,7 +109,11 @@ const handleSubmit = async () => {
     }
 };
 
+const dialogRoot = ref<HTMLElement>();
+const trapFocus = useDialogFocus(dialogRoot, () => projectStore.isModalOpen);
+
 const handleKeydown = (e: KeyboardEvent) => {
+    trapFocus(e);
     if (e.key === 'Escape' && projectStore.isModalOpen) {
         handleClose();
     }
@@ -120,7 +125,6 @@ const handleKeydown = (e: KeyboardEvent) => {
         <div
             v-if="projectStore.isModalOpen"
             class="fixed inset-0 z-50 flex items-center justify-center p-4 font-vazir text-right"
-            @keydown="handleKeydown"
         >
             <!-- Backdrop -->
             <div
@@ -129,7 +133,7 @@ const handleKeydown = (e: KeyboardEvent) => {
             ></div>
 
             <!-- Modal Content -->
-            <div class="relative w-full max-w-lg rounded-2xl bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark shadow-modal p-6 z-10 animate-in fade-in zoom-in-95 duration-150">
+            <div ref="dialogRoot" role="dialog" aria-modal="true" tabindex="-1" @keydown="handleKeydown" :aria-label="modalTitle" class="relative w-full max-w-lg rounded-2xl bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark shadow-modal p-6 z-10 animate-in fade-in zoom-in-95 duration-150">
                 <!-- Header -->
                 <div class="flex items-center justify-between pb-4 border-b border-surface-borderLight dark:border-surface-borderDark mb-5">
                     <h3 class="text-base font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
@@ -142,6 +146,7 @@ const handleKeydown = (e: KeyboardEvent) => {
                     <button
                         type="button"
                         @click="handleClose"
+                        aria-label="بستن پروژه"
                         class="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     >
                         <X class="w-4 h-4" />

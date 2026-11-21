@@ -6,7 +6,6 @@ import {
     Palette,
     Calendar,
     Target,
-    Bell,
     CheckCircle,
     AlertCircle,
     Loader2,
@@ -19,9 +18,8 @@ const authStore = useAuthStore();
 
 const theme = ref<'dark' | 'light' | 'system'>(authStore.userPreferences?.theme || 'dark');
 const dateFormat = ref<'jalali' | 'gregorian'>(authStore.userPreferences?.date_format || 'jalali');
-const startOfWeek = ref<'saturday' | 'monday'>(authStore.userPreferences?.start_of_week || 'saturday');
+const startOfWeek = ref(authStore.userPreferences?.start_of_week ?? 6);
 const dailyGoal = ref<number>(authStore.userPreferences?.daily_goal || 5);
-const emailNotifications = ref<boolean>(authStore.userPreferences?.email_notifications ?? true);
 
 const isLoading = ref(false);
 const successMessage = ref('');
@@ -33,9 +31,8 @@ watch(
         if (prefs) {
             theme.value = prefs.theme || 'dark';
             dateFormat.value = prefs.date_format || 'jalali';
-            startOfWeek.value = prefs.start_of_week || 'saturday';
+            startOfWeek.value = prefs.start_of_week ?? 6;
             dailyGoal.value = prefs.daily_goal ?? 5;
-            emailNotifications.value = prefs.email_notifications ?? true;
         }
     },
     { immediate: true }
@@ -50,7 +47,6 @@ const handleSavePreferences = async () => {
         date_format: dateFormat.value,
         start_of_week: startOfWeek.value,
         daily_goal: Number(dailyGoal.value),
-        email_notifications: emailNotifications.value,
     };
 
     isLoading.value = true;
@@ -167,18 +163,18 @@ const handleSavePreferences = async () => {
                 <div class="grid grid-cols-2 gap-2.5">
                     <button
                         type="button"
-                        @click="startOfWeek = 'saturday'"
+                        @click="startOfWeek = 6"
                         class="p-2.5 rounded-xl border text-xs font-medium transition-all"
-                        :class="startOfWeek === 'saturday' ? 'border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30' : 'border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-zinc-600 dark:text-zinc-400'"
+                        :class="startOfWeek === 6 ? 'border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30' : 'border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-zinc-600 dark:text-zinc-400'"
                     >
                         شنبه (تقویم رسمی ایران)
                     </button>
 
                     <button
                         type="button"
-                        @click="startOfWeek = 'monday'"
+                        @click="startOfWeek = 1"
                         class="p-2.5 rounded-xl border text-xs font-medium transition-all"
-                        :class="startOfWeek === 'monday' ? 'border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30' : 'border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-zinc-600 dark:text-zinc-400'"
+                        :class="startOfWeek === 1 ? 'border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30' : 'border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-zinc-600 dark:text-zinc-400'"
                     >
                         دوشنبه (استاندارد بین‌المللی)
                     </button>

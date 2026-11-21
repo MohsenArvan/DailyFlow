@@ -11,3 +11,12 @@ storage/logs/*.log
 storage/framework/cache/data/*
 storage/framework/sessions/*
 storage/framework/views/*
+
+.env.*
+tests
+docs
+.agents
+.codex
+public/hot
+public/build
+backups

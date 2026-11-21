@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import type { Task } from '@/types/task';
 import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 import BaseBadge from '@/components/ui/BaseBadge.vue';
-import { Calendar, CheckSquare, Clock } from 'lucide-vue-next';
+import { Bell, Calendar, CheckSquare, Repeat2 } from 'lucide-vue-next';
 
 interface Props {
     task: Task;
@@ -47,6 +47,7 @@ const dateBadgeVariant = computed(() => {
             <!-- Custom Checkbox -->
             <div @click.stop>
                 <BaseCheckbox
+                    :aria-label="task.title"
                     :model-value="isCompleted"
                     :priority="task.priority"
                     @change="handleCheckboxToggle"
@@ -54,7 +55,7 @@ const dateBadgeVariant = computed(() => {
             </div>
 
             <!-- Task Title & Meta -->
-            <div class="flex-1 min-w-0 cursor-pointer" @click="handleItemClick">
+            <button type="button" class="min-w-0 flex-1 text-right" @click="handleItemClick">
                 <p
                     class="text-xs sm:text-sm font-medium leading-tight truncate transition-colors"
                     :class="[
@@ -66,14 +67,20 @@ const dateBadgeVariant = computed(() => {
                     {{ task.title }}
                 </p>
 
+                <span v-if="task.tags?.length" class="mt-0.5 block truncate text-xs text-zinc-600 dark:text-zinc-300">
+                    {{ task.tags.join('، ') }}
+                </span>
                 <p v-if="task.description && !isCompleted" class="text-[11px] text-zinc-400 truncate mt-0.5">
                     {{ task.description }}
                 </p>
-            </div>
+            </button>
         </div>
 
         <!-- Right (in RTL: Left) Section: Badges & Actions -->
         <div class="flex items-center gap-2 shrink-0 cursor-pointer" @click="handleItemClick">
+            <Repeat2 v-if="task.recurrence_rule" role="img" aria-label="تکرارشونده" class="size-4" />
+            <Bell v-if="task.reminder_at" role="img" aria-label="یادآور دارد" class="size-4" />
+            <time v-if="task.due_time" dir="ltr" class="text-xs">{{ task.due_time.slice(0, 5) }}</time>
             <!-- Subtasks Progress Pill -->
             <span
                 v-if="task.subtasks_count > 0"

@@ -23,6 +23,7 @@ class Task extends Model
         'project_id',
         'parent_id',
         'title',
+        'tags',
         'description',
         'status',
         'priority',
@@ -37,6 +38,7 @@ class Task extends Model
     protected function casts(): array
     {
         return [
+            'tags' => 'array',
             'status' => TaskStatus::class,
             'priority' => TaskPriority::class,
             'due_date' => 'immutable_date:Y-m-d',

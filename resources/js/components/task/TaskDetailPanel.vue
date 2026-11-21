@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { useDialogFocus } from '@/composables/useDialogFocus';
+import { ref, watch, onMounted } from 'vue';
 import { useTaskStore } from '@/stores/tasks';
 import { useProjectStore } from '@/stores/projects';
 import type { TaskPriority } from '@/types/task';
+import TaskScheduleFields from './TaskScheduleFields.vue';
 import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 import {
     X,
@@ -88,22 +90,22 @@ const handleDeleteTask = async () => {
     }
 };
 
+const dialogRoot = ref<HTMLElement>();
+const trapFocus = useDialogFocus(dialogRoot, () => taskStore.isDetailsOpen);
+
 const handleKeydown = (e: KeyboardEvent) => {
+    trapFocus(e);
     if (e.key === 'Escape' && taskStore.isDetailsOpen) {
         taskStore.closeDetails();
     }
 };
 
 onMounted(() => {
-    window.addEventListener('keydown', handleKeydown);
     if (!projectStore.projects.length) {
         projectStore.fetchProjects();
     }
 });
 
-onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeydown);
-});
 </script>
 
 <template>
@@ -116,7 +118,7 @@ onUnmounted(() => {
             ></div>
 
             <!-- Slide-over Drawer -->
-            <div class="fixed inset-y-0 left-0 max-w-full w-full sm:w-[480px] bg-surface-cardLight dark:bg-surface-cardDark shadow-modal border-r border-surface-borderLight dark:border-surface-borderDark flex flex-col z-10 animate-in slide-in-from-left duration-200">
+            <div ref="dialogRoot" role="dialog" aria-modal="true" tabindex="-1" @keydown="handleKeydown" aria-label="جزئیات تسک" class="fixed inset-y-0 left-0 max-w-full w-full sm:w-[480px] bg-surface-cardLight dark:bg-surface-cardDark shadow-modal border-r border-surface-borderLight dark:border-surface-borderDark flex flex-col z-10 animate-in slide-in-from-left duration-200">
                 <!-- Header Actions -->
                 <div class="h-16 px-6 border-b border-surface-borderLight dark:border-surface-borderDark flex items-center justify-between shrink-0">
                     <div class="flex items-center gap-2">
@@ -141,7 +143,7 @@ onUnmounted(() => {
                             type="button"
                             @click="handleDeleteTask"
                             class="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
-                            title="حذف تسک"
+                            title="حذف تسک" aria-label="حذف تسک"
                         >
                             <Trash2 class="w-4 h-4" />
                         </button>
@@ -149,7 +151,7 @@ onUnmounted(() => {
                             type="button"
                             @click="taskStore.closeDetails"
                             class="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                            title="بستن (Esc)"
+                            title="بستن (Esc)" aria-label="بستن جزئیات تسک"
                         >
                             <X class="w-4 h-4" />
                         </button>
@@ -161,6 +163,7 @@ onUnmounted(() => {
                     <!-- Title Input -->
                     <div>
                         <input
+                            aria-label="عنوان تسک"
                             :value="taskStore.currentTask.title"
                             @blur="handleTitleBlur"
                             @keyup.enter="($event.target as HTMLInputElement).blur()"
@@ -226,6 +229,8 @@ onUnmounted(() => {
                             </select>
                         </div>
                     </div>
+
+                    <TaskScheduleFields :key="taskStore.currentTask.uuid" :task="taskStore.currentTask" />
 
                     <!-- Description Textarea -->
                     <div>

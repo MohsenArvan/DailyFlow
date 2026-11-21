@@ -75,7 +75,7 @@ const loadProjectData = async () => {
 };
 
 watch(
-    () => route.params.uuid,
+    () => [route.params.uuid, taskStore.revision],
     () => {
         loadProjectData();
     }

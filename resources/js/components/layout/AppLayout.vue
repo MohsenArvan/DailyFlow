@@ -5,13 +5,17 @@ import AppSidebar from '@/components/layout/AppSidebar.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import ToastContainer from '@/components/ui/ToastContainer.vue';
 import TaskDetailPanel from '@/components/task/TaskDetailPanel.vue';
+import CommandPalette from '@/components/common/CommandPalette.vue';
 import ProjectModal from '@/components/project/ProjectModal.vue';
+import { useTaskReminders } from '@/composables/useTaskReminders';
 import { useToast } from '@/composables/useToast';
 import { useTaskStore } from '@/stores/tasks';
 import { useProjectStore } from '@/stores/projects';
 
 const route = useRoute();
+const palette = ref<InstanceType<typeof CommandPalette>>();
 const toast = useToast();
+useTaskReminders();
 const taskStore = useTaskStore();
 const projectStore = useProjectStore();
 
@@ -47,19 +51,19 @@ const handleQuickAdd = () => {
 };
 
 const handleOpenSearch = () => {
-    toast.info('بخش جست‌وجو و فیلترها در فاز بعدی فعال خواهد شد.');
+    void palette.value?.open();
 };
 
 const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && isMobileDrawerOpen.value) {
         closeMobileDrawer();
     }
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    if ((e.metaKey || e.ctrlKey) && e.code === 'KeyK') {
         e.preventDefault();
         handleOpenSearch();
     }
     // 'q' key focuses quick add if not already typing in an input
-    if (e.key === 'q' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key === 'q' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
         e.preventDefault();
         handleQuickAdd();
     }
@@ -129,6 +133,8 @@ onUnmounted(() => {
 
         <!-- Project Create/Edit Modal -->
         <ProjectModal />
+
+        <CommandPalette ref="palette" />
 
         <!-- Global Toast Container -->
         <ToastContainer />

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { watch, onMounted, onUnmounted, computed } from 'vue';
+import { useDialogFocus } from '@/composables/useDialogFocus';
+import { ref, watch, onUnmounted, computed } from 'vue';
 import { X } from 'lucide-vue-next';
 
 interface Props {
@@ -28,7 +29,11 @@ const sizeClasses = computed(() => {
     }
 });
 
+const dialogRoot = ref<HTMLElement>();
+const trapFocus = useDialogFocus(dialogRoot, () => props.isOpen);
+
 const handleKeydown = (e: KeyboardEvent) => {
+    trapFocus(e);
     if (e.key === 'Escape' && props.isOpen) {
         emit('close');
     }
@@ -45,12 +50,8 @@ watch(
     }
 );
 
-onMounted(() => {
-    window.addEventListener('keydown', handleKeydown);
-});
 
 onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeydown);
     document.body.style.overflow = '';
 });
 </script>
@@ -68,6 +69,9 @@ onUnmounted(() => {
             <div
                 class="relative w-full rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark p-6 shadow-modal z-10 animate-in zoom-in-95 fade-in duration-200"
                 :class="sizeClasses"
+                ref="dialogRoot"
+                tabindex="-1"
+                @keydown="handleKeydown" :aria-label="title || 'پنجره'"
                 role="dialog"
                 aria-modal="true"
             >

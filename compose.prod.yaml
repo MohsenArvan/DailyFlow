@@ -1,31 +1,119 @@
+x-runtime: &runtime
+  build:
+    context: .
+    dockerfile: docker/prod/php/Dockerfile
+    target: app
+  image: dailyflow-app:production
+  restart: unless-stopped
+  environment:
+    APP_ENV: production
+    APP_DEBUG: "false"
+    APP_KEY: ${APP_KEY:?Set APP_KEY}
+    APP_URL: ${APP_URL:?Set APP_URL}
+    LOG_CHANNEL: stderr
+    DB_CONNECTION: pgsql
+    DB_HOST: database
+    DB_DATABASE: ${DB_DATABASE:-dailyflow}
+    DB_USERNAME: ${DB_USERNAME:-dailyflow}
+    DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+    REDIS_HOST: redis
+    REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
+    CACHE_STORE: redis
+    QUEUE_CONNECTION: redis
+    SESSION_DRIVER: redis
+    SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}
+    SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:?Set SANCTUM_STATEFUL_DOMAINS}
+  depends_on:
+    database:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  cpus: 1
+  mem_limit: 512m
+
 services:
   app:
-    environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-    restart: always
+    <<: *runtime
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
+      interval: 10s
+      timeout: 4s
+      retries: 6
+
+  migrate:
+    <<: *runtime
+    restart: "no"
+    command: ["php", "artisan", "migrate", "--force"]
 
   web:
-    restart: always
-
-  node:
-    profiles: ["donotstart"] # In production, assets are pre-built, node container is not needed at runtime
+    build:
+      context: .
+      dockerfile: docker/prod/php/Dockerfile
+      target: web
+    restart: unless-stopped
+    ports:
+      - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8080}:80"
+    depends_on:
+      app:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    cpus: 0.5
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/up"]
+      interval: 10s
+      timeout: 4s
+      retries: 6
 
   database:
-    restart: always
-    ports: [] # Do not expose database port to host in production
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-dailyflow}
+      POSTGRES_USER: ${DB_USERNAME:-dailyflow}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    cpus: 1
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 4s
+      retries: 12
 
   redis:
-    restart: always
+    image: redis:7-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD}
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    volumes:
+      - redis_data:/data
+    cpus: 0.5
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -qx PONG"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
 
   queue:
-    environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-    restart: always
+    <<: *runtime
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["php", "artisan", "queue:work", "redis", "--sleep=3", "--tries=3", "--timeout=90"]
+    stop_grace_period: 100s
 
   scheduler:
-    environment:
-      - APP_ENV=production
-      - APP_DEBUG=false
-    restart: always
+    <<: *runtime
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["php", "artisan", "schedule:work"]
+
+volumes:
+  postgres_data:
+  redis_data:

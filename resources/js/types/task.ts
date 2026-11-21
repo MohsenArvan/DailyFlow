@@ -4,6 +4,13 @@ export type TaskPriority = 'none' | 'low' | 'medium' | 'high' | 'urgent';
 
 export type TaskStatus = 'pending' | 'completed';
 
+export interface RecurrenceRule {
+    frequency: 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'yearly' | 'custom';
+    interval?: number;
+    by_weekday?: number[];
+    end_date?: string | null;
+}
+
 export interface Subtask {
     id: number;
     title: string;
@@ -19,11 +26,14 @@ export interface Task {
     project_id?: number | null;
     title: string;
     description?: string | null;
+    tags?: string[];
     status: TaskStatus;
     priority: TaskPriority;
     priority_label: string;
     due_date?: string | null;
     due_time?: string | null;
+    recurrence_rule?: RecurrenceRule | null;
+    reminder_at?: string | null;
     is_today: boolean;
     is_overdue: boolean;
     order: number;
@@ -40,18 +50,24 @@ export interface Task {
 export interface CreateTaskPayload {
     title: string;
     description?: string | null;
+    tags?: string[];
     priority?: TaskPriority;
     due_date?: string | null;
     due_time?: string | null;
+    recurrence_rule?: RecurrenceRule | null;
+    reminder_at?: string | null;
     project_id?: number | null;
 }
 
 export interface UpdateTaskPayload {
     title?: string;
     description?: string | null;
+    tags?: string[];
     priority?: TaskPriority;
     due_date?: string | null;
     due_time?: string | null;
+    recurrence_rule?: RecurrenceRule | null;
+    reminder_at?: string | null;
     project_id?: number | null;
 }
 

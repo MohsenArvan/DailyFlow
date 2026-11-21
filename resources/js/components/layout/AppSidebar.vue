@@ -6,6 +6,7 @@ import { useTaskStore } from '@/stores/tasks';
 import { useProjectStore } from '@/stores/projects';
 import {
     CheckCircle2,
+    ChartNoAxesColumnIncreasing,
     Inbox,
     Calendar,
     CalendarDays,
@@ -41,6 +42,13 @@ const taskStore = useTaskStore();
 const projectStore = useProjectStore();
 
 const navItems = computed(() => [
+    {
+        name: 'داشبورد',
+        path: '/dashboard',
+        icon: ChartNoAxesColumnIncreasing,
+        badge: null,
+        color: 'text-brand-600 dark:text-brand-400',
+    },
     {
         name: 'صندوق ورودی',
         path: '/inbox',

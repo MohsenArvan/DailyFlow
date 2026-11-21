@@ -4,9 +4,12 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "type-check": "vue-tsc --noEmit"
+        "type-check": "vue-tsc --noEmit",
+        "test": "vitest run",
+        "test:e2e": "playwright test"
     },
     "dependencies": {
+        "@fontsource-variable/vazirmatn": "^5.3.0",
         "axios": "^1.7.9",
         "date-fns": "^4.1.0",
         "date-fns-jalali": "^4.4.0-1",
@@ -16,6 +19,7 @@
         "vue-router": "^4.5.0"
     },
     "devDependencies": {
+        "@playwright/test": "^1.65.1",
         "@types/node": "^22.10.1",
         "@vitejs/plugin-vue": "^5.2.1",
         "autoprefixer": "^10.4.20",
@@ -25,6 +29,7 @@
         "tailwindcss": "^3.4.16",
         "typescript": "^5.7.2",
         "vite": "^6.0.3",
-        "vue-tsc": "^2.1.10"
+        "vitest": "^5.1.1",
+        "vue-tsc": "^3.3.14"
     }
 }
