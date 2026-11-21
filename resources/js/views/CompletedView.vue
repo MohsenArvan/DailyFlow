@@ -1,7 +1,15 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
+import { useTaskStore } from '@/stores/tasks';
 import AppLayout from '@/components/layout/AppLayout.vue';
-import BaseEmptyState from '@/components/ui/BaseEmptyState.vue';
-import { CheckSquare } from 'lucide-vue-next';
+import TaskList from '@/components/task/TaskList.vue';
+import { CheckSquare, Loader2 } from 'lucide-vue-next';
+
+const taskStore = useTaskStore();
+
+onMounted(async () => {
+    await taskStore.fetchTasks('completed');
+});
 </script>
 
 <template>
@@ -16,15 +24,16 @@ import { CheckSquare } from 'lucide-vue-next';
             </p>
         </div>
 
-        <div class="rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark p-8 shadow-subtle min-h-[340px] flex items-center justify-center">
-            <BaseEmptyState
-                title="هنوز تسک انجام‌شده‌ای در سابقه ثبت نشده است"
-                description="با تکمیل اولین کار در بخش امروز یا اینباکس، تاریخچه دستاوردهایتان اینجا ثبت خواهد شد."
-            >
-                <template #icon>
-                    <CheckSquare class="w-6 h-6 text-emerald-400 stroke-[1.8]" />
-                </template>
-            </BaseEmptyState>
+        <!-- Tasks Loading Spinner or Task List -->
+        <div v-if="taskStore.isLoading" class="flex items-center justify-center p-12 text-zinc-400">
+            <Loader2 class="w-7 h-7 animate-spin text-brand-500" />
         </div>
+
+        <TaskList
+            v-else
+            :tasks="taskStore.tasks"
+            empty-title="هنوز تسک انجام‌شده‌ای در سابقه ثبت نشده است"
+            empty-description="با تکمیل اولین کار در بخش امروز یا اینباکس، تاریخچه دستاوردهایتان اینجا ثبت خواهد شد."
+        />
     </AppLayout>
 </template>

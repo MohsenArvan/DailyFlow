@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\SubtaskController;
+use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,4 +33,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/preferences', [UserController::class, 'updatePreferences']);
         Route::put('/password', [UserController::class, 'updatePassword']);
     });
+
+    // Tasks API
+    Route::get('/tasks/counts', [TaskController::class, 'counts']);
+    Route::post('/tasks/reorder', [TaskController::class, 'reorder']);
+    Route::post('/tasks/{task}/complete', [TaskController::class, 'complete']);
+    Route::post('/tasks/{task}/reopen', [TaskController::class, 'reopen']);
+    Route::apiResource('tasks', TaskController::class);
+
+    // Subtasks API
+    Route::post('/tasks/{task}/subtasks', [SubtaskController::class, 'store']);
+    Route::post('/tasks/{task}/subtasks/reorder', [SubtaskController::class, 'reorder']);
+    Route::put('/subtasks/{subtask}', [SubtaskController::class, 'update']);
+    Route::post('/subtasks/{subtask}/toggle', [SubtaskController::class, 'toggle']);
+    Route::delete('/subtasks/{subtask}', [SubtaskController::class, 'destroy']);
 });

@@ -1,20 +1,21 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
+import { useTaskStore } from '@/stores/tasks';
 import AppLayout from '@/components/layout/AppLayout.vue';
-import BaseEmptyState from '@/components/ui/BaseEmptyState.vue';
-import BaseButton from '@/components/ui/BaseButton.vue';
-import { useToast } from '@/composables/useToast';
-import { Inbox, Plus } from 'lucide-vue-next';
+import TaskQuickAdd from '@/components/task/TaskQuickAdd.vue';
+import TaskList from '@/components/task/TaskList.vue';
+import { Inbox, Loader2 } from 'lucide-vue-next';
 
-const toast = useToast();
+const taskStore = useTaskStore();
 
-const handleAddTask = () => {
-    toast.info('قابلیت ثبت سریع در صندوق ورودی در فاز ۵ فعال می‌شود.');
-};
+onMounted(async () => {
+    await taskStore.fetchTasks('inbox');
+});
 </script>
 
 <template>
     <AppLayout>
-        <div class="mb-6 flex items-center justify-between">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
                 <h2 class="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
                     <Inbox class="w-5 h-5 text-zinc-500" />
@@ -24,32 +25,23 @@ const handleAddTask = () => {
                     جایگاهی برای ثبت سریع ایده‌ها و کارهایی که هنوز زمان‌بندی نشده‌اند
                 </p>
             </div>
-
-            <BaseButton variant="primary" size="sm" @click="handleAddTask">
-                <template #prefix>
-                    <Plus class="w-4 h-4 stroke-[2.5]" />
-                </template>
-                افزودن به اینباکس
-            </BaseButton>
         </div>
 
-        <div class="rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark p-8 shadow-subtle min-h-[340px] flex items-center justify-center">
-            <BaseEmptyState
-                title="صندوق ورودی شما خلوت و تمیز است"
-                description="هر زمان کاری به ذهنتان رسید، سریعاً آن را به اینباکس بسپارید تا بعداً دسته‌بندی و زمان‌بندی کنید."
-            >
-                <template #icon>
-                    <Inbox class="w-6 h-6 text-zinc-400 stroke-[1.8]" />
-                </template>
-                <template #action>
-                    <BaseButton variant="outline" size="sm" @click="handleAddTask">
-                        <template #prefix>
-                            <Plus class="w-3.5 h-3.5" />
-                        </template>
-                        ثبت کار در اینباکس
-                    </BaseButton>
-                </template>
-            </BaseEmptyState>
+        <!-- Quick Add Form -->
+        <div class="mb-6">
+            <TaskQuickAdd :default-due-date="null" />
         </div>
+
+        <!-- Tasks Loading Spinner or Task List -->
+        <div v-if="taskStore.isLoading" class="flex items-center justify-center p-12 text-zinc-400">
+            <Loader2 class="w-7 h-7 animate-spin text-brand-500" />
+        </div>
+
+        <TaskList
+            v-else
+            :tasks="taskStore.tasks"
+            empty-title="صندوق ورودی شما خلوت و تمیز است"
+            empty-description="هر زمان کاری به ذهنتان رسید، سریعاً آن را به اینباکس بسپارید تا بعداً زمان‌بندی و دسته‌بندی کنید."
+        />
     </AppLayout>
 </template>

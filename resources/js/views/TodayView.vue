@@ -1,15 +1,24 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import { useToast } from '@/composables/useToast';
+import { useTaskStore } from '@/stores/tasks';
 import AppLayout from '@/components/layout/AppLayout.vue';
-import BaseEmptyState from '@/components/ui/BaseEmptyState.vue';
-import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseProgressBar from '@/components/ui/BaseProgressBar.vue';
-import { Calendar, Plus, Sparkles, CheckCircle2 } from 'lucide-vue-next';
+import TaskQuickAdd from '@/components/task/TaskQuickAdd.vue';
+import TaskList from '@/components/task/TaskList.vue';
+import { Calendar, CheckCircle2, Sparkles, Loader2 } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
-const toast = useToast();
+const taskStore = useTaskStore();
+
+const formatLocalDate = (d: Date = new Date()): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const todayDateString = formatLocalDate();
 
 const todayFormatted = computed(() => {
     const isJalali = authStore.userPreferences?.date_format !== 'gregorian';
@@ -23,34 +32,33 @@ const todayFormatted = computed(() => {
 });
 
 const dailyGoal = computed(() => authStore.userPreferences?.daily_goal || 5);
+const completedToday = computed(() => taskStore.counts.today_completed ?? 0);
+const remainingToday = computed(() => taskStore.counts.today);
 
-const handleAddTask = () => {
-    toast.info('قابلیت ایجاد و مدیریت کامل تسک‌ها در فاز ۵ فعال می‌شود.');
-};
+onMounted(async () => {
+    await taskStore.fetchTasks('today');
+});
 </script>
 
 <template>
     <AppLayout>
         <!-- Top Date & Goal Summary -->
-        <div class="mb-8 p-6 rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark shadow-card">
+        <div class="mb-6 p-6 rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark shadow-card">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
                     <h2 class="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                        <Calendar class="w-5 h-5 text-brand-600 dark:text-brand-400" />
                         <span>کارهای امروز</span>
                         <span class="text-xs font-normal text-zinc-400">({{ todayFormatted }})</span>
                     </h2>
                     <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                        تسک‌های برنامه‌ریزی‌شده برای تمرکز امروز شما
+                        {{ remainingToday > 0 ? `${remainingToday} تسک برای انجام در انتظار شماست.` : 'تمام تسک‌های امروز تکمیل شده یا هنوز تسکی ثبت نکرده‌اید.' }}
                     </p>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <BaseButton variant="primary" size="sm" @click="handleAddTask">
-                        <template #prefix>
-                            <Plus class="w-4 h-4 stroke-[2.5]" />
-                        </template>
-                        افزودن تسک
-                    </BaseButton>
+                <div v-if="completedToday >= dailyGoal" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                    <Sparkles class="w-4 h-4" />
+                    <span>هدف روزانه محقق شد!</span>
                 </div>
             </div>
 
@@ -58,30 +66,29 @@ const handleAddTask = () => {
             <div class="pt-3 border-t border-surface-borderLight dark:border-surface-borderDark">
                 <div class="flex justify-between items-center text-xs mb-1.5">
                     <span class="font-medium text-zinc-600 dark:text-zinc-400">هدف تکمیل روزانه</span>
-                    <span class="font-bold text-brand-600 dark:text-brand-400">۰ از {{ dailyGoal }} تسک</span>
+                    <span class="font-bold text-brand-600 dark:text-brand-400">
+                        {{ completedToday }} از {{ dailyGoal }} تسک
+                    </span>
                 </div>
-                <BaseProgressBar :value="0" :max="dailyGoal" color="brand" />
+                <BaseProgressBar :value="completedToday" :max="dailyGoal" color="brand" />
             </div>
         </div>
 
-        <!-- Task List Area / Empty State -->
-        <div class="rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark p-8 shadow-subtle min-h-[340px] flex items-center justify-center">
-            <BaseEmptyState
-                title="همه کارهای امروزتان به انجام رسیده یا هنوز تسکی ثبت نکرده‌اید"
-                description="برای شروع روز پرانرژی، اولین کار امروزتان را با دکمه زیر یا کلید Q اضافه کنید."
-            >
-                <template #icon>
-                    <CheckCircle2 class="w-6 h-6 text-brand-500 stroke-[2]" />
-                </template>
-                <template #action>
-                    <BaseButton variant="outline" size="sm" @click="handleAddTask">
-                        <template #prefix>
-                            <Plus class="w-3.5 h-3.5" />
-                        </template>
-                        ثبت کار جدید برای امروز
-                    </BaseButton>
-                </template>
-            </BaseEmptyState>
+        <!-- Quick Add Form -->
+        <div class="mb-6">
+            <TaskQuickAdd :default-due-date="todayDateString" />
         </div>
+
+        <!-- Tasks Loading Spinner or Task List -->
+        <div v-if="taskStore.isLoading" class="flex items-center justify-center p-12 text-zinc-400">
+            <Loader2 class="w-7 h-7 animate-spin text-brand-500" />
+        </div>
+
+        <TaskList
+            v-else
+            :tasks="taskStore.tasks"
+            empty-title="همه کارهای امروز انجام شده‌اند یا تسکی ثبت نشده"
+            empty-description="برای برنامه‌ریزی روز پرانرژی، اولین کار امروزتان را با فرم بالا یا کلید Q اضافه کنید."
+        />
     </AppLayout>
 </template>
