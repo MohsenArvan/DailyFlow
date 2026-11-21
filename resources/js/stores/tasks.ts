@@ -47,21 +47,23 @@ export const useTaskStore = defineStore('tasks', () => {
         }
     }
 
-    async function fetchTasks(view: string = 'today', search?: string): Promise<void> {
+    async function fetchTasks(view: string = 'today', search?: string, signal?: AbortSignal): Promise<boolean> {
         const request = ++taskRequest;
         isLoading.value = true;
         activeView.value = view;
         try {
             const params: Record<string, string> = { view };
             if (search) params.search = search;
-            const response = await api.get<{ data: Task[] }>('/tasks', { params });
-            if (request !== taskRequest) return;
+            const response = await api.get<{ data: Task[] }>('/tasks', { params, ...(signal ? { signal } : {}) });
+            if (request !== taskRequest || signal?.aborted) return false;
             tasks.value = response.data.data;
             await fetchCounts();
+            return request === taskRequest && !signal?.aborted;
         } catch (err) {
-            if (request !== taskRequest) return;
+            if (request !== taskRequest || signal?.aborted) return false;
             console.error('Failed to fetch tasks:', err);
             toast.error('خطا در دریافت لیست تسک‌ها.');
+            return false;
         } finally {
             if (request === taskRequest) isLoading.value = false;
         }

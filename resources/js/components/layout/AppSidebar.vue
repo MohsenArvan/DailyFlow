@@ -12,6 +12,7 @@ import {
     CalendarDays,
     AlertCircle,
     CheckSquare,
+    Columns3,
     FolderKanban,
     Settings,
     ChevronLeft,
@@ -48,6 +49,13 @@ const navItems = computed(() => [
         icon: ChartNoAxesColumnIncreasing,
         badge: null,
         color: 'text-brand-600 dark:text-brand-400',
+    },
+    {
+        name: 'کانبان همهٔ تسک‌ها',
+        path: '/kanban',
+        icon: Columns3,
+        badge: null,
+        color: 'text-indigo-700 dark:text-indigo-300',
     },
     {
         name: 'صندوق ورودی',

@@ -5,7 +5,7 @@ import { useProjectStore } from '@/stores/projects';
 import { useTaskStore } from '@/stores/tasks';
 import api from '@/services/api';
 import type { Task } from '@/types/task';
-import ProjectBoard from '@/components/project/ProjectBoard.vue';
+import TaskBoard from '@/components/task/TaskBoard.vue';
 import AppLayout from '@/components/layout/AppLayout.vue';
 import TaskQuickAdd from '@/components/task/TaskQuickAdd.vue';
 import TaskList from '@/components/task/TaskList.vue';
@@ -244,7 +244,7 @@ const handleDelete = async () => {
                 دریافت تسک‌ها ممکن نشد.
                 <button type="button" class="font-semibold underline" @click="loadProjectData">تلاش دوباره</button>
             </p>
-            <ProjectBoard v-else-if="project.view_mode === 'board'" :key="project.uuid" :tasks="taskStore.tasks" />
+            <TaskBoard v-else-if="project.view_mode === 'board'" :key="project.uuid" :tasks="taskStore.tasks" />
             <TaskList
                 v-else
                 :tasks="taskStore.tasks"

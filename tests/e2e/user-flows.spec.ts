@@ -143,3 +143,27 @@ test('kanban drag and mobile status selection persist across reloads', async ({ 
     await expect(page.getByRole('button', { name: '۳۰ روز' })).toBeVisible();
     expect(await page.locator('html').evaluate(el => el.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+test('global kanban includes project and inbox tasks and saves status changes', async ({ page }) => {
+    await register(page);
+    await addTask(page, 'Unassigned board task');
+    await page.goto('/projects');
+    await page.getByRole('button', { name: /پروژه جدید/ }).first().click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByPlaceholder(/مثلاً: طراحی/).fill('Global board project');
+    await dialog.locator('button[type=submit]').click();
+    await page.locator('aside').getByText('Global board project', { exact: true }).first().click();
+    await addTask(page, 'Assigned board task');
+
+    await page.getByRole('navigation', { name: 'ناوبری اصلی' }).getByRole('link', { name: 'کانبان همهٔ تسک‌ها' }).click();
+    const pending = page.getByRole('region', { name: 'در انتظار', exact: true });
+    const assigned = pending.getByRole('listitem').filter({ hasText: 'Assigned board task' });
+    await expect(assigned.getByText('Global board project', { exact: true })).toBeVisible();
+    await expect(pending.getByRole('listitem').filter({ hasText: 'Unassigned board task' }).getByText('بدون پروژه')).toBeVisible();
+
+    await assigned.getByRole('combobox', { name: 'وضعیت Assigned board task' }).selectOption('in_progress');
+    const progress = page.getByRole('region', { name: 'در حال انجام', exact: true });
+    await expect(progress.getByRole('button', { name: 'Assigned board task' })).toBeVisible();
+    await page.reload();
+    await expect(progress.getByRole('button', { name: 'Assigned board task' })).toBeVisible();
+});

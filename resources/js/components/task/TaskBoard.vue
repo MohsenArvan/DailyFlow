@@ -4,7 +4,7 @@ import { GripVertical } from 'lucide-vue-next';
 import { useTaskStore } from '@/stores/tasks';
 import type { Task, TaskStatus } from '@/types/task';
 
-const props = defineProps<{ tasks: Task[] }>();
+const props = defineProps<{ tasks: Task[]; projectNames?: ReadonlyMap<number, string> }>();
 const store = useTaskStore();
 const columns = [
     { status: 'pending', label: 'در انتظار', dot: 'bg-zinc-500' },
@@ -86,6 +86,10 @@ function changeStatus(event: Event, task: Task) {
                             <GripVertical class="size-4" />
                         </span>
                     </div>
+                    <p v-if="projectNames && (task.project_id == null || projectNames.has(task.project_id))"
+                        class="break-words text-xs text-zinc-600 dark:text-zinc-300">
+                        {{ task.project_id == null ? 'بدون پروژه' : projectNames.get(task.project_id) }}
+                    </p>
                     <div class="flex flex-wrap items-center gap-2 text-xs">
                         <span v-if="task.priority !== 'none'" class="rounded-full bg-surface-subtleLight px-2 py-1 dark:bg-surface-subtleDark">{{ task.priority_label }}</span>
                         <select :id="'board-status-' + task.uuid" :aria-label="`وضعیت ${task.title}`" :value="task.status" :disabled="saving.has(task.uuid)"
