@@ -218,3 +218,50 @@ test('a wallpaper selected in settings follows the user across pages and reloads
     await page.reload();
     await expect(background).toHaveCSS('background-image', /dunes\.webp/);
 });
+
+test('Persian calendar and clock controls save the selected schedule', async ({ page }) => {
+    await register(page);
+    await addTask(page, 'Persian scheduled task');
+    await page.getByRole('button', { name: 'Persian scheduled task', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'جزئیات تسک' });
+    const schedule = dialog.getByText('زمان‌بندی، تکرار و یادآور', { exact: true });
+    const placement = await schedule.boundingBox();
+    await dialog.getByRole('button', { name: 'موعد انجام', exact: true }).click();
+    const calendar = dialog.getByRole('region', { name: 'تقویم موعد انجام' });
+    await expect(calendar).toBeVisible();
+    expect((await schedule.boundingBox())?.y).toBe(placement?.y);
+    await expect(calendar.locator('[aria-current=date]')).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
+    const date = await calendar.locator(':focus').getAttribute('data-date');
+    expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const dueUpdate = page.waitForResponse(response => response.request().method() === 'PUT' && response.url().includes('/tasks/') && response.ok());
+    await page.keyboard.press('Enter');
+    expect((await (await dueUpdate).json()).task.due_date).toBe(date);
+    await expect(calendar).toBeHidden();
+
+    await schedule.click();
+    const hour = dialog.getByRole('combobox', { name: 'ساعت سررسید، ساعت' });
+    const minute = dialog.getByRole('combobox', { name: 'ساعت سررسید، دقیقه' });
+    await hour.selectOption('09');
+    await minute.selectOption('35');
+    const scheduled = page.waitForResponse(response => response.request().method() === 'PUT' && response.url().includes('/tasks/') && response.ok());
+    await dialog.getByRole('button', { name: 'ذخیرهٔ زمان‌بندی' }).click();
+    const payload = await (await scheduled).json();
+    expect(payload.task.due_time).toMatch(/^09:35/);
+    expect(payload.task.due_date).toBe(date);
+
+    await page.setViewportSize({ width: 390, height: 650 });
+    const reminderTrigger = dialog.getByRole('button', { name: 'تاریخ یادآور', exact: true });
+    await reminderTrigger.click();
+    const reminderCalendar = dialog.getByRole('region', { name: 'تقویم تاریخ یادآور' });
+    const bounds = await reminderCalendar.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.y).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
+    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(650);
+    await page.keyboard.press('Escape');
+    await expect(reminderCalendar).toBeHidden();
+    await expect(reminderTrigger).toBeFocused();
+    await expect(dialog).toBeVisible();
+});

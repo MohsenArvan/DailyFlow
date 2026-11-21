@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useAgendaDates } from '@/composables/useAgendaDates';
 import type { Task } from '@/types/task';
 import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 import BaseBadge from '@/components/ui/BaseBadge.vue';
@@ -9,6 +10,7 @@ interface Props {
     task: Task;
 }
 
+const { formatDay } = useAgendaDates();
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
@@ -115,7 +117,7 @@ const dateBadgeVariant = computed(() => {
                 ]"
             >
                 <Calendar class="w-3 h-3" />
-                <span>{{ task.is_today ? 'امروز' : (task.is_overdue ? 'عقب‌افتاده' : task.due_date) }}</span>
+                <span>{{ task.is_today ? 'امروز' : (task.is_overdue ? 'عقب‌افتاده' : formatDay(task.due_date)) }}</span>
             </span>
         </div>
     </div>

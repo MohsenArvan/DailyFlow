@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import CalendarField from '@/components/ui/CalendarField.vue';
 import { useAgendaDates } from '@/composables/useAgendaDates';
 import { useTaskStore } from '@/stores/tasks';
 import type { TaskPriority } from '@/types/task';
@@ -145,6 +146,8 @@ const handleKeydown = (e: KeyboardEvent) => {
                         اینباکس
                     </button>
                 </div>
+
+                <CalendarField v-model="dueDate" label="تاریخ دلخواه" class="basis-full sm:max-w-72" />
 
                 <!-- Priority Shortcuts -->
                 <div class="flex items-center gap-1.5">

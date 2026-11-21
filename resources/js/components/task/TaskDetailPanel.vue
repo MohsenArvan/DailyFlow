@@ -5,10 +5,10 @@ import { useTaskStore } from '@/stores/tasks';
 import { useProjectStore } from '@/stores/projects';
 import type { TaskPriority, TaskStatus } from '@/types/task';
 import TaskScheduleFields from './TaskScheduleFields.vue';
+import CalendarField from '@/components/ui/CalendarField.vue';
 import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 import {
     X,
-    Calendar,
     CircleDot,
     ListChecks,
     Flag,
@@ -62,10 +62,9 @@ const handlePriorityChange = (e: Event) => {
     }
 };
 
-const handleDueDateChange = (e: Event) => {
-    const target = e.target as HTMLInputElement;
+const handleDueDateChange = (date: string | null) => {
     if (taskStore.currentTask) {
-        taskStore.updateTask(taskStore.currentTask.uuid, { due_date: target.value || null });
+        taskStore.updateTask(taskStore.currentTask.uuid, { due_date: date });
     }
 };
 
@@ -222,20 +221,8 @@ onMounted(() => {
                             </select>
                         </div>
 
-                        <!-- Due Date Selector -->
-                        <div>
-                            <label for="task-editor-date" class="task-field-label">
-                                <Calendar class="w-3 h-3" />
-                                موعد انجام
-                            </label>
-                            <input
-                                type="date"
-                                id="task-editor-date"
-                                :value="taskStore.currentTask.due_date || ''"
-                                @change="handleDueDateChange"
-                                class="task-field"
-                            />
-                        </div>
+                        <CalendarField label="موعد انجام" :model-value="taskStore.currentTask.due_date ?? null"
+                            @update:model-value="handleDueDateChange" />
 
                         <!-- Project Selector -->
                         <div>

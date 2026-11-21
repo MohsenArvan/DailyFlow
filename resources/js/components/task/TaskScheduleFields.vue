@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import CalendarField from '@/components/ui/CalendarField.vue';
+import ClockField from '@/components/ui/ClockField.vue';
 import { useTaskStore } from '@/stores/tasks';
 import type { RecurrenceRule, Task } from '@/types/task';
 
@@ -8,32 +10,57 @@ const store = useTaskStore();
 const frequency = ref<RecurrenceRule['frequency'] | ''>('');
 const interval = ref(1);
 const weekdays = ref<number[]>([]);
-const endDate = ref('');
-const reminder = ref('');
-const dueDate = ref('');
-const dueTime = ref('');
+const endDate = ref<string | null>(null);
+const reminderDate = ref<string | null>(null);
+const reminderTime = ref<string | null>(null);
+const dueDate = ref<string | null>(null);
+const dueTime = ref<string | null>(null);
 const saving = ref(false);
 const status = ref('');
+const deviceToday = new Intl.DateTimeFormat('sv-SE').format(new Date());
 const dayNames = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
+
+function deviceWallTime(date: Date) {
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
 
 watch(() => props.task, task => {
     frequency.value = task.recurrence_rule?.frequency ?? '';
     interval.value = task.recurrence_rule?.interval ?? 1;
     weekdays.value = task.recurrence_rule?.by_weekday ?? [];
-    endDate.value = task.recurrence_rule?.end_date ?? '';
-    dueDate.value = task.due_date ?? '';
-    dueTime.value = task.due_time?.slice(0, 5) ?? '';
-    const date = task.reminder_at ? new Date(task.reminder_at) : null;
-    reminder.value = date
-        ? new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
-        : '';
+    endDate.value = task.recurrence_rule?.end_date ?? null;
+    dueDate.value = task.due_date ?? null;
+    dueTime.value = task.due_time?.slice(0, 5) ?? null;
+    const localReminder = task.reminder_at ? deviceWallTime(new Date(task.reminder_at)) : '';
+    reminderDate.value = localReminder.slice(0, 10) || null;
+    reminderTime.value = localReminder.slice(11) || null;
 }, { immediate: true });
 
 async function save() {
     if (saving.value) return;
+    if (frequency.value && !dueDate.value) {
+        status.value = 'برای تکرار، تاریخ سررسید را تعیین کنید.';
+        return;
+    }
+    if (Boolean(reminderDate.value) !== Boolean(reminderTime.value)) {
+        status.value = 'برای یادآور، تاریخ و ساعت را با هم تعیین یا پاک کنید.';
+        return;
+    }
     if (frequency.value === 'custom' && !weekdays.value.length) {
         status.value = 'حداقل یک روز هفته را انتخاب کنید.';
         return;
+    }
+
+    const wallTime = reminderDate.value && reminderTime.value ? `${reminderDate.value}T${reminderTime.value}` : null;
+    const storedWallTime = props.task.reminder_at ? deviceWallTime(new Date(props.task.reminder_at)) : null;
+    let reminderUpdate: string | null | undefined;
+    if (wallTime !== storedWallTime) {
+        const nextReminder = wallTime ? new Date(wallTime) : null;
+        if (nextReminder && (!Number.isFinite(nextReminder.getTime()) || deviceWallTime(nextReminder) !== wallTime)) {
+            status.value = 'این ساعت در تاریخ انتخاب‌شده وجود ندارد. ساعت دیگری را انتخاب کنید.';
+            return;
+        }
+        reminderUpdate = nextReminder?.toISOString().replace('.000Z', '+00:00') ?? null;
     }
 
     saving.value = true;
@@ -48,7 +75,7 @@ async function save() {
                 ...(frequency.value === 'custom' ? { by_weekday: weekdays.value } : {}),
                 end_date: endDate.value || null,
             } : null,
-            reminder_at: reminder.value ? new Date(reminder.value).toISOString().replace('.000Z', '+00:00') : null,
+            ...(reminderUpdate !== undefined ? { reminder_at: reminderUpdate } : {}),
         });
         status.value = updated ? 'زمان‌بندی ذخیره شد.' : 'ذخیرهٔ زمان‌بندی ممکن نشد.';
     } finally {
@@ -61,8 +88,8 @@ async function save() {
     <details class="rounded-xl border bg-surface-subtleLight/60 p-4 text-sm dark:bg-surface-subtleDark/40">
         <summary class="cursor-pointer font-semibold">زمان‌بندی، تکرار و یادآور</summary>
         <form class="mt-4 grid gap-3 sm:grid-cols-2" @submit.prevent="save">
-            <label>تاریخ سررسید <input v-model="dueDate" type="date" :required="!!frequency" class="task-field mt-1.5" /></label>
-            <label>ساعت سررسید <input v-model="dueTime" type="time" class="task-field mt-1.5" /></label>
+            <CalendarField v-model="dueDate" label="تاریخ سررسید" />
+            <ClockField v-model="dueTime" label="ساعت سررسید" />
             <label>تکرار
                 <select v-model="frequency" class="task-field mt-1.5">
                     <option value="">بدون تکرار</option>
@@ -79,11 +106,10 @@ async function save() {
                         <input v-model="weekdays" type="checkbox" :value="index" /> {{ day }}
                     </label>
                 </fieldset>
-                <label>پایان تکرار <input v-model="endDate" type="date" class="task-field mt-1.5" /></label>
+                <CalendarField v-model="endDate" label="پایان تکرار" />
             </template>
-            <label>یادآور (به ساعت دستگاه)
-                <input v-model="reminder" type="datetime-local" class="task-field mt-1.5" />
-            </label>
+            <CalendarField v-model="reminderDate" label="تاریخ یادآور" :today="deviceToday" />
+            <ClockField v-model="reminderTime" label="ساعت یادآور (به ساعت دستگاه)" />
             <button type="submit" :disabled="saving" class="justify-self-start rounded-lg border border-brand-500 px-3 py-2">ذخیرهٔ زمان‌بندی</button>
             <p v-if="status" role="status" class="sm:col-span-2">{{ status }}</p>
         </form>
