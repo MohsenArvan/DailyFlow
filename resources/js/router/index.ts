@@ -9,6 +9,48 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'خانه' },
     },
     {
+        path: '/today',
+        name: 'today',
+        component: () => import('@/views/TodayView.vue'),
+        meta: { requiresAuth: true, title: 'امروز' },
+    },
+    {
+        path: '/inbox',
+        name: 'inbox',
+        component: () => import('@/views/InboxView.vue'),
+        meta: { requiresAuth: true, title: 'صندوق ورودی' },
+    },
+    {
+        path: '/upcoming',
+        name: 'upcoming',
+        component: () => import('@/views/UpcomingView.vue'),
+        meta: { requiresAuth: true, title: 'به‌زودی' },
+    },
+    {
+        path: '/overdue',
+        name: 'overdue',
+        component: () => import('@/views/OverdueView.vue'),
+        meta: { requiresAuth: true, title: 'عقب‌افتاده' },
+    },
+    {
+        path: '/completed',
+        name: 'completed',
+        component: () => import('@/views/CompletedView.vue'),
+        meta: { requiresAuth: true, title: 'انجام‌شده' },
+    },
+    {
+        path: '/projects',
+        name: 'projects',
+        component: () => import('@/views/ProjectsView.vue'),
+        meta: { requiresAuth: true, title: 'پروژه‌ها' },
+    },
+    {
+        path: '/settings',
+        name: 'settings',
+        component: () => import('@/views/SettingsView.vue'),
+        meta: { requiresAuth: true, title: 'تنظیمات' },
+    },
+    {
         path: '/login',
         name: 'login',
         component: () => import('@/views/auth/LoginView.vue'),
@@ -19,12 +61,6 @@ const routes: RouteRecordRaw[] = [
         name: 'register',
         component: () => import('@/views/auth/RegisterView.vue'),
         meta: { guestOnly: true, title: 'ثبت‌نام' },
-    },
-    {
-        path: '/settings',
-        name: 'settings',
-        component: () => import('@/views/SettingsView.vue'),
-        meta: { requiresAuth: true, title: 'تنظیمات' },
     },
     {
         path: '/:pathMatch(.*)*',
@@ -55,7 +91,11 @@ router.beforeEach(async (to, _from, next) => {
     }
 
     if (to.meta.guestOnly && authStore.isAuthenticated) {
-        return next({ name: 'home' });
+        return next({ name: 'today' });
+    }
+
+    if (to.path === '/' && authStore.isAuthenticated) {
+        return next({ name: 'today' });
     }
 
     next();

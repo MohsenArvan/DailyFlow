@@ -16,6 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
     const token = ref<string | null>(localStorage.getItem('dailyflow_token'));
     const isLoading = ref<boolean>(false);
     const isInitialized = ref<boolean>(false);
+    let initPromise: Promise<void> | null = null;
 
     const isAuthenticated = computed(() => !!user.value);
     const userPreferences = computed(() => user.value?.preferences);
@@ -31,20 +32,26 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function initialize(): Promise<void> {
         if (isInitialized.value) return;
+        if (initPromise) return initPromise;
 
-        isLoading.value = true;
-        try {
-            const response = await api.get<{ user: User }>('/auth/me');
-            user.value = response.data.user;
-            applyTheme(user.value.preferences?.theme);
-        } catch {
-            user.value = null;
-            token.value = null;
-            localStorage.removeItem('dailyflow_token');
-        } finally {
-            isLoading.value = false;
-            isInitialized.value = true;
-        }
+        initPromise = (async () => {
+            isLoading.value = true;
+            try {
+                const response = await api.get<{ user: User }>('/auth/me');
+                user.value = response.data.user;
+                applyTheme(user.value.preferences?.theme);
+            } catch {
+                user.value = null;
+                token.value = null;
+                localStorage.removeItem('dailyflow_token');
+            } finally {
+                isLoading.value = false;
+                isInitialized.value = true;
+                initPromise = null;
+            }
+        })();
+
+        return initPromise;
     }
 
     async function login(credentials: LoginCredentials): Promise<User> {
