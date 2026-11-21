@@ -139,3 +139,23 @@
         color-scheme: dark;
     }
 }
+
+.wallpaper-layer {
+    background-position: center;
+    background-size: cover;
+}
+
+.wallpaper-layer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgb(247 249 253 / 76%);
+}
+
+.dark .wallpaper-layer::after {
+    background: rgb(15 18 29 / 73%);
+}
+
+.has-wallpaper .app-workspace {
+    background-color: transparent;
+}

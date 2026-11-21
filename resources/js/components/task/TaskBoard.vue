@@ -81,12 +81,12 @@ function changeStatus(event: Event, task: Task) {
             </header>
             <p v-if="!grouped[column.status].length" class="kanban-empty m-3 rounded-xl border border-dashed px-3 py-5 text-center text-sm">تسکی در این ستون نیست</p>
             <ul v-else class="space-y-2.5 p-3">
-                <li v-for="task in grouped[column.status]" :key="task.uuid" class="kanban-card workspace-panel p-3.5">
+                <li v-for="task in grouped[column.status]" :key="task.uuid" class="kanban-card workspace-panel cursor-grab select-none p-3.5 active:cursor-grabbing"
+                    :draggable="!saving.has(task.uuid)" @dragstart="startDrag($event, task)" @dragend="dragged = undefined">
                     <div class="flex items-start gap-2">
                         <button type="button" class="min-w-0 flex-1 break-words text-start text-sm font-bold leading-6 hover:underline" @click="store.openDetails(task)">{{ task.title }}</button>
-                        <span draggable="true" title="کشیدن تسک" aria-hidden="true"
-                            class="inline-flex size-7 shrink-0 cursor-grab select-none items-center justify-center rounded-md text-zinc-600 hover:bg-surface-subtleLight active:cursor-grabbing dark:text-zinc-400 dark:hover:bg-surface-subtleDark"
-                            @dragstart="startDrag($event, task)" @dragend="dragged = undefined">
+                        <span title="کشیدن تسک" aria-hidden="true"
+                            class="inline-flex size-7 shrink-0 cursor-grab select-none items-center justify-center rounded-md text-zinc-600 hover:bg-surface-subtleLight active:cursor-grabbing dark:text-zinc-400 dark:hover:bg-surface-subtleDark">
                             <GripVertical class="pointer-events-none size-4" />
                         </span>
                     </div>

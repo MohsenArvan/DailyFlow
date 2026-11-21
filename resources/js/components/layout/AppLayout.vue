@@ -96,7 +96,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="min-h-screen flex bg-surface-light dark:bg-surface-dark text-zinc-900 dark:text-zinc-100 transition-colors font-vazir antialiased">
+    <div class="app-workspace min-h-screen flex bg-surface-light dark:bg-surface-dark text-zinc-900 dark:text-zinc-100 transition-colors font-vazir antialiased">
         <a href="#workspace-content" class="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-surface-cardLight focus:p-3 focus:text-zinc-900">
             رفتن به محتوای اصلی
         </a>

@@ -89,3 +89,18 @@ test('password update fails with invalid current password', function () {
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['current_password']);
 });
+
+test('wallpaper preferences accept bundled identifiers and reject arbitrary URLs', function () {
+    $user = User::factory()->create(['preferences' => ['theme' => 'light']]);
+    $this->actingAs($user)->getJson('/api/v1/auth/me')
+        ->assertJsonPath('user.preferences.wallpaper', 'lake');
+
+    $this->putJson('/api/v1/user/preferences', ['wallpaper' => 'dunes'])->assertOk()
+        ->assertJsonPath('user.preferences.wallpaper', 'dunes')
+        ->assertJsonPath('user.preferences.theme', 'light');
+
+    $this->putJson('/api/v1/user/preferences', ['wallpaper' => 'https://example.test/photo.jpg'])
+        ->assertUnprocessable()->assertJsonValidationErrors('wallpaper');
+
+    $this->getJson('/api/v1/auth/me')->assertJsonPath('user.preferences.wallpaper', 'dunes');
+});

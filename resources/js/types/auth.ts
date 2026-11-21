@@ -1,8 +1,11 @@
+export type Wallpaper = 'lake' | 'dunes' | 'coast' | 'none';
+
 export interface UserPreferences {
     theme: 'dark' | 'light' | 'system';
     date_format: 'jalali' | 'gregorian';
     start_of_week: number; // 6 = Saturday (Shanbeh)
     daily_goal: number;
+    wallpaper?: Wallpaper;
 }
 
 export interface User {
@@ -38,6 +41,7 @@ export interface UpdatePreferencesData {
     date_format?: 'jalali' | 'gregorian';
     start_of_week?: number;
     daily_goal?: number;
+    wallpaper?: Wallpaper;
 }
 
 export interface UpdatePasswordData {

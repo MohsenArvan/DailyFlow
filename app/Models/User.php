@@ -19,6 +19,7 @@ class User extends Authenticatable
         'date_format' => 'jalali',
         'start_of_week' => 6,
         'daily_goal' => 5,
+        'wallpaper' => 'lake',
     ];
 
     /**

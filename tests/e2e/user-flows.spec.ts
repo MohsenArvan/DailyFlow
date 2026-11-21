@@ -118,8 +118,8 @@ test('kanban drag and mobile status selection persist across reloads', async ({ 
     const pending = page.getByRole('region', { name: 'در انتظار', exact: true });
     const progress = page.getByRole('region', { name: 'در حال انجام', exact: true });
     const completed = page.getByRole('region', { name: 'انجام‌شده', exact: true });
-    const handle = pending.getByRole('listitem').filter({ hasText: 'Board task' }).getByTitle('کشیدن تسک');
-    await handle.hover();
+    const title = pending.getByRole('button', { name: 'Board task', exact: true });
+    await title.hover();
     await page.mouse.down();
     const dropZone = await progress.boundingBox();
     expect(dropZone).not.toBeNull();
@@ -199,4 +199,22 @@ test('task details open centrally and save the in-progress status', async ({ pag
     await page.goto('/kanban');
     await expect(page.getByRole('region', { name: 'در حال انجام', exact: true })
         .getByRole('button', { name: 'Task details status' })).toBeVisible();
+});
+
+test('a wallpaper selected in settings follows the user across pages and reloads', async ({ page }) => {
+    await register(page);
+    const background = page.locator('.wallpaper-layer');
+    await expect(background).toHaveCSS('background-image', /lake\.webp/);
+
+    await page.goto('/settings');
+    await page.getByRole('button', { name: 'ظاهر و ترجیحات' }).click();
+    await page.getByText('تپه‌های شنی', { exact: true }).click();
+    await page.getByRole('button', { name: 'ذخیره تنظیمات ظاهری' }).click();
+    await expect(background).toHaveCSS('background-image', /dunes\.webp/);
+    expect((await page.request.get('/wallpapers/dunes.webp')).ok()).toBe(true);
+
+    await page.goto('/kanban');
+    await expect(background).toHaveCSS('background-image', /dunes\.webp/);
+    await page.reload();
+    await expect(background).toHaveCSS('background-image', /dunes\.webp/);
 });
