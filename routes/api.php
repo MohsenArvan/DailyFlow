@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\ProjectController;
 use App\Http\Controllers\Api\V1\SubtaskController;
 use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -47,4 +48,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/subtasks/{subtask}', [SubtaskController::class, 'update']);
     Route::post('/subtasks/{subtask}/toggle', [SubtaskController::class, 'toggle']);
     Route::delete('/subtasks/{subtask}', [SubtaskController::class, 'destroy']);
+
+    // Projects API
+    Route::post('/projects/reorder', [ProjectController::class, 'reorder']);
+    Route::post('/projects/{project}/favorite', [ProjectController::class, 'toggleFavorite']);
+    Route::apiResource('projects', ProjectController::class);
 });

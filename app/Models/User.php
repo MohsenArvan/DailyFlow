@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -68,5 +69,15 @@ class User extends Authenticatable
         $decoded = is_string($value) ? (json_decode($value, true) ?: []) : ($value ?: []);
 
         return array_merge(self::DEFAULT_PREFERENCES, $decoded);
+    }
+
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class)->orderBy('order');
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class)->orderBy('order');
     }
 }

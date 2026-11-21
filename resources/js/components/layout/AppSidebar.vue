@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useTaskStore } from '@/stores/tasks';
+import { useProjectStore } from '@/stores/projects';
 import {
     CheckCircle2,
     Inbox,
@@ -37,6 +38,7 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const taskStore = useTaskStore();
+const projectStore = useProjectStore();
 
 const navItems = computed(() => [
     {
@@ -159,29 +161,60 @@ const handleLogout = async () => {
             <div class="px-3 pt-4 border-t border-surface-borderLight/70 dark:border-surface-borderDark/70 mt-2">
                 <div v-if="!collapsed || mobile" class="flex items-center justify-between px-2 mb-2">
                     <span class="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">پروژه‌ها</span>
+                    <button
+                        type="button"
+                        @click="projectStore.openCreateModal"
+                        class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition-colors"
+                        title="افزودن پروژه جدید"
+                    >
+                        <Plus class="w-3.5 h-3.5" />
+                    </button>
+                </div>
+
+                <!-- Projects list -->
+                <div class="space-y-0.5">
+                    <router-link
+                        v-for="proj in projectStore.projects"
+                        :key="proj.uuid"
+                        :to="`/projects/${proj.uuid}`"
+                        @click="handleItemClick"
+                        class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all group relative"
+                        :class="[
+                            isActive(`/projects/${proj.uuid}`)
+                                ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-semibold shadow-xs'
+                                : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50',
+                            collapsed && !mobile ? 'justify-center px-0' : ''
+                        ]"
+                        :title="collapsed && !mobile ? proj.name : undefined"
+                    >
+                        <span
+                            class="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs transition-transform group-hover:scale-125"
+                            :style="{ backgroundColor: proj.color }"
+                        ></span>
+                        <span v-if="!collapsed || mobile" class="truncate flex-1 text-right">{{ proj.name }}</span>
+                        <span
+                            v-if="proj.pending_tasks_count > 0 && (!collapsed || mobile)"
+                            class="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-zinc-200/70 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 leading-none shrink-0"
+                        >
+                            {{ proj.pending_tasks_count }}
+                        </span>
+                    </router-link>
+
+                    <!-- Link to All Projects -->
                     <router-link
                         to="/projects"
                         @click="handleItemClick"
-                        class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition-colors"
-                        title="مدیریت پروژه‌ها"
+                        class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 transition-all mt-1"
+                        :class="[
+                            isActive('/projects') ? 'text-brand-600 dark:text-brand-400 font-semibold' : '',
+                            collapsed && !mobile ? 'justify-center px-0' : ''
+                        ]"
+                        :title="collapsed && !mobile ? 'همه پروژه‌ها' : undefined"
                     >
-                        <Plus class="w-3.5 h-3.5" />
+                        <FolderKanban class="w-3.5 h-3.5 shrink-0" />
+                        <span v-if="!collapsed || mobile" class="truncate flex-1 text-right">همه پروژه‌ها</span>
                     </router-link>
                 </div>
-
-                <router-link
-                    to="/projects"
-                    @click="handleItemClick"
-                    class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 transition-all"
-                    :class="[
-                        isActive('/projects') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-semibold' : '',
-                        collapsed && !mobile ? 'justify-center px-0' : ''
-                    ]"
-                    :title="collapsed && !mobile ? 'پروژه‌ها' : undefined"
-                >
-                    <FolderKanban class="w-4 h-4 shrink-0 text-amber-500" />
-                    <span v-if="!collapsed || mobile" class="truncate flex-1 text-right">لیست پروژه‌ها</span>
-                </router-link>
             </div>
         </div>
 

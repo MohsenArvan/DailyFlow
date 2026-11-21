@@ -5,12 +5,15 @@ import AppSidebar from '@/components/layout/AppSidebar.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import ToastContainer from '@/components/ui/ToastContainer.vue';
 import TaskDetailPanel from '@/components/task/TaskDetailPanel.vue';
+import ProjectModal from '@/components/project/ProjectModal.vue';
 import { useToast } from '@/composables/useToast';
 import { useTaskStore } from '@/stores/tasks';
+import { useProjectStore } from '@/stores/projects';
 
 const route = useRoute();
 const toast = useToast();
 const taskStore = useTaskStore();
+const projectStore = useProjectStore();
 
 const isSidebarCollapsed = ref(localStorage.getItem('dailyflow_sidebar_collapsed') === 'true');
 const isMobileDrawerOpen = ref(false);
@@ -64,7 +67,10 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 onMounted(async () => {
     window.addEventListener('keydown', handleKeydown);
-    await taskStore.fetchCounts();
+    await Promise.all([
+        taskStore.fetchCounts(),
+        projectStore.fetchProjects(),
+    ]);
 });
 
 onUnmounted(() => {
@@ -120,6 +126,9 @@ onUnmounted(() => {
 
         <!-- Task Details Slide-over Panel -->
         <TaskDetailPanel />
+
+        <!-- Project Create/Edit Modal -->
+        <ProjectModal />
 
         <!-- Global Toast Container -->
         <ToastContainer />

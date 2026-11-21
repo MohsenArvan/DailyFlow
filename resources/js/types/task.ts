@@ -1,3 +1,5 @@
+import type { Project } from '@/types/project';
+
 export type TaskPriority = 'none' | 'low' | 'medium' | 'high' | 'urgent';
 
 export type TaskStatus = 'pending' | 'completed';
@@ -30,6 +32,7 @@ export interface Task {
     subtasks_completed_count: number;
     subtasks_progress: number;
     subtasks?: Subtask[];
+    project?: Project | null;
     created_at: string;
     updated_at: string;
 }

@@ -68,6 +68,11 @@ class Task extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
     public function subtasks(): HasMany
     {
         return $this->hasMany(Subtask::class)->orderBy('position');
