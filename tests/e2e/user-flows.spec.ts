@@ -240,10 +240,14 @@ test('Persian calendar and clock controls save the selected schedule', async ({ 
     await expect(calendar).toBeHidden();
 
     await schedule.click();
-    const hour = dialog.getByRole('combobox', { name: 'ساعت سررسید، ساعت' });
-    const minute = dialog.getByRole('combobox', { name: 'ساعت سررسید، دقیقه' });
-    await hour.selectOption('09');
-    await minute.selectOption('35');
+    const clockTrigger = dialog.getByRole('button', { name: 'ساعت سررسید', exact: true });
+    await clockTrigger.click();
+    const clock = dialog.getByRole('region', { name: 'انتخاب ساعت سررسید' });
+    await clock.getByRole('button', { name: 'ساعت ۰۹', exact: true }).click();
+    await clock.getByRole('button', { name: 'دقیقه ۳۰', exact: true }).click();
+    for (let index = 0; index < 5; index++) await clock.getByRole('button', { name: 'یک دقیقه بیشتر' }).click();
+    await clock.getByRole('button', { name: 'تأیید زمان' }).click();
+    await expect(clockTrigger).toBeFocused();
     const scheduled = page.waitForResponse(response => response.request().method() === 'PUT' && response.url().includes('/tasks/') && response.ok());
     await dialog.getByRole('button', { name: 'ذخیرهٔ زمان‌بندی' }).click();
     const payload = await (await scheduled).json();
