@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { useTaskStore } from '@/stores/tasks';
+import { useProjectStore } from '@/stores/projects';
 import type { TaskPriority } from '@/types/task';
 import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 import {
     X,
     Calendar,
     Flag,
+    Folder,
     Trash2,
     Plus,
     CheckCircle2,
@@ -14,6 +16,7 @@ import {
 } from 'lucide-vue-next';
 
 const taskStore = useTaskStore();
+const projectStore = useProjectStore();
 
 const newSubtaskTitle = ref('');
 const isEditingTitle = ref(false);
@@ -44,6 +47,14 @@ const handleDueDateChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
     if (taskStore.currentTask) {
         taskStore.updateTask(taskStore.currentTask.uuid, { due_date: target.value || null });
+    }
+};
+
+const handleProjectChange = (e: Event) => {
+    const target = e.target as HTMLSelectElement;
+    if (taskStore.currentTask) {
+        const val = target.value ? parseInt(target.value, 10) : null;
+        taskStore.updateTask(taskStore.currentTask.uuid, { project_id: val });
     }
 };
 
@@ -85,6 +96,9 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 onMounted(() => {
     window.addEventListener('keydown', handleKeydown);
+    if (!projectStore.projects.length) {
+        projectStore.fetchProjects();
+    }
 });
 
 onUnmounted(() => {
@@ -155,8 +169,8 @@ onUnmounted(() => {
                         />
                     </div>
 
-                    <!-- Meta Properties (Priority & Due Date) -->
-                    <div class="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-surface-subtleLight dark:bg-surface-subtleDark border border-surface-borderLight dark:border-surface-borderDark text-xs">
+                    <!-- Meta Properties (Priority, Due Date, Project) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-surface-subtleLight dark:bg-surface-subtleDark border border-surface-borderLight dark:border-surface-borderDark text-xs">
                         <!-- Priority Selector -->
                         <div>
                             <label class="block text-[11px] text-zinc-400 mb-1 flex items-center gap-1">
@@ -188,6 +202,28 @@ onUnmounted(() => {
                                 @change="handleDueDateChange"
                                 class="w-full bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark rounded-xl px-2.5 py-1.5 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs"
                             />
+                        </div>
+
+                        <!-- Project Selector -->
+                        <div>
+                            <label class="block text-[11px] text-zinc-400 mb-1 flex items-center gap-1">
+                                <Folder class="w-3 h-3" />
+                                پروژه
+                            </label>
+                            <select
+                                :value="taskStore.currentTask.project_id || ''"
+                                @change="handleProjectChange"
+                                class="w-full bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark rounded-xl px-2.5 py-1.5 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs truncate"
+                            >
+                                <option value="">اینباکس (بدون پروژه)</option>
+                                <option
+                                    v-for="p in projectStore.projects"
+                                    :key="p.id"
+                                    :value="p.id"
+                                >
+                                    {{ p.name }}
+                                </option>
+                            </select>
                         </div>
                     </div>
 

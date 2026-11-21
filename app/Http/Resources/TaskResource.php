@@ -53,6 +53,7 @@ class TaskResource extends JsonResource
             'subtasks_completed_count' => $subtasksCompletedCount,
             'subtasks_progress' => $subtasksProgress,
             'subtasks' => SubtaskResource::collection($this->whenLoaded('subtasks')),
+            'project' => new ProjectResource($this->whenLoaded('project')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

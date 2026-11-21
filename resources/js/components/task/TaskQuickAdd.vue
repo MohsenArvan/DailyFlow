@@ -6,10 +6,12 @@ import { Plus, Calendar, Flag, Loader2 } from 'lucide-vue-next';
 
 interface Props {
     defaultDueDate?: string | null;
+    projectId?: number | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     defaultDueDate: null,
+    projectId: null,
 });
 
 const taskStore = useTaskStore();
@@ -53,6 +55,7 @@ const handleSubmit = async () => {
             title: title.value.trim(),
             priority: priority.value,
             due_date: dueDate.value,
+            project_id: props.projectId,
         });
 
         title.value = '';
