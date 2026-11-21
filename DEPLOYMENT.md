@@ -20,7 +20,7 @@ The standalone production Compose file uses its own PostgreSQL and Redis volumes
 
 ## Domain and TLS
 
-Point the domain at your host. Configure the host's Nginx virtual host for that domain with `proxy_pass http://127.0.0.1:8080` and preserve `Host` with `proxy_set_header Host $host`. Obtain a certificate with `certbot --nginx -d tasks.example.com` and enable the HTTPS redirect. Serve the HSTS header from the TLS virtual host once HTTPS is working. Keep the Compose web port bound to loopback.
+Point the domain at your host. Configure the host's Nginx virtual host for that domain with `proxy_pass http://127.0.0.1:8080` and set `proxy_set_header Host $host` and `proxy_set_header X-Forwarded-Proto $scheme`. The latter lets PHP generate HTTPS asset URLs behind the proxy. Obtain a certificate with `certbot --nginx -d tasks.example.com` and enable the HTTPS redirect. Serve the HSTS header from the TLS virtual host once HTTPS is working. Keep the Compose web port bound to loopback.
 
 ## Backups and recovery
 

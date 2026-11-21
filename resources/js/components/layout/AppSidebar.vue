@@ -61,7 +61,7 @@ const navItems = computed(() => [
         path: '/today',
         icon: Calendar,
         badge: taskStore.counts.today > 0 ? taskStore.counts.today : null,
-        badgeColor: 'bg-brand-500/10 text-brand-600 dark:text-brand-400',
+        badgeColor: 'bg-brand-500/10 text-brand-700 dark:text-brand-400',
         color: 'text-brand-600 dark:text-brand-400',
     },
     {
@@ -121,7 +121,7 @@ const handleLogout = async () => {
                     </div>
                     <div v-if="!collapsed || mobile" class="flex flex-col truncate">
                         <span class="text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-50 leading-tight">DailyFlow</span>
-                        <span class="text-[10px] text-zinc-400 font-medium">جریان روزانه کارهای من</span>
+                        <span class="text-[10px] text-zinc-600 dark:text-zinc-400 font-medium">جریان روزانه کارهای من</span>
                     </div>
                 </router-link>
 
@@ -147,7 +147,7 @@ const handleLogout = async () => {
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all group relative"
                     :class="[
                         isActive(item.path)
-                            ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-semibold shadow-xs'
+                            ? 'bg-brand-500/10 text-brand-700 dark:text-brand-400 font-semibold shadow-xs'
                             : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50',
                         collapsed && !mobile ? 'justify-center px-0' : ''
                     ]"
@@ -168,12 +168,12 @@ const handleLogout = async () => {
             <!-- Projects Section -->
             <div class="px-3 pt-4 border-t border-surface-borderLight/70 dark:border-surface-borderDark/70 mt-2">
                 <div v-if="!collapsed || mobile" class="flex items-center justify-between px-2 mb-2">
-                    <span class="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">پروژه‌ها</span>
+                    <span class="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">پروژه‌ها</span>
                     <button
                         type="button"
                         @click="projectStore.openCreateModal"
                         class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition-colors"
-                        title="افزودن پروژه جدید"
+                        title="افزودن پروژه جدید" aria-label="افزودن پروژه جدید"
                     >
                         <Plus class="w-3.5 h-3.5" />
                     </button>
@@ -189,7 +189,7 @@ const handleLogout = async () => {
                         class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all group relative"
                         :class="[
                             isActive(`/projects/${proj.uuid}`)
-                                ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-semibold shadow-xs'
+                                ? 'bg-brand-500/10 text-brand-700 dark:text-brand-400 font-semibold shadow-xs'
                                 : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50',
                             collapsed && !mobile ? 'justify-center px-0' : ''
                         ]"
@@ -212,7 +212,7 @@ const handleLogout = async () => {
                     <router-link
                         to="/projects"
                         @click="handleItemClick"
-                        class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 transition-all mt-1"
+                        class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/40 dark:hover:bg-zinc-800/40 transition-all mt-1"
                         :class="[
                             isActive('/projects') ? 'text-brand-600 dark:text-brand-400 font-semibold' : '',
                             collapsed && !mobile ? 'justify-center px-0' : ''
@@ -233,7 +233,7 @@ const handleLogout = async () => {
                 @click="handleItemClick"
                 class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 transition-all"
                 :class="[
-                    isActive('/settings') ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400 font-semibold' : '',
+                    isActive('/settings') ? 'bg-brand-500/10 text-brand-700 dark:text-brand-400 font-semibold' : '',
                     collapsed && !mobile ? 'justify-center px-0' : ''
                 ]"
                 :title="collapsed && !mobile ? 'تنظیمات' : undefined"
@@ -245,7 +245,7 @@ const handleLogout = async () => {
             <button
                 type="button"
                 @click="handleLogout"
-                class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all"
                 :class="collapsed && !mobile ? 'justify-center px-0' : ''"
                 :title="collapsed && !mobile ? 'خروج از حساب' : undefined"
             >

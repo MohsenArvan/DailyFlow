@@ -129,7 +129,7 @@ onMounted(() => {
                             :class="[
                                 taskStore.currentTask.status === 'completed'
                                     ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+                                    : 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/20'
                             ]"
                         >
                             <RotateCcw v-if="taskStore.currentTask.status === 'completed'" class="w-3.5 h-3.5" />
@@ -176,11 +176,12 @@ onMounted(() => {
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-surface-subtleLight dark:bg-surface-subtleDark border border-surface-borderLight dark:border-surface-borderDark text-xs">
                         <!-- Priority Selector -->
                         <div>
-                            <label class="block text-[11px] text-zinc-400 mb-1 flex items-center gap-1">
+                            <label for="task-editor-priority" class="block text-[11px] text-zinc-600 dark:text-zinc-300 mb-1 flex items-center gap-1">
                                 <Flag class="w-3 h-3" />
                                 اولویت
                             </label>
                             <select
+                                id="task-editor-priority"
                                 :value="taskStore.currentTask.priority"
                                 @change="handlePriorityChange"
                                 class="w-full bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark rounded-xl px-2.5 py-1.5 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs"
@@ -195,12 +196,13 @@ onMounted(() => {
 
                         <!-- Due Date Selector -->
                         <div>
-                            <label class="block text-[11px] text-zinc-400 mb-1 flex items-center gap-1">
+                            <label for="task-editor-date" class="block text-[11px] text-zinc-600 dark:text-zinc-300 mb-1 flex items-center gap-1">
                                 <Calendar class="w-3 h-3" />
                                 موعد انجام
                             </label>
                             <input
                                 type="date"
+                                id="task-editor-date"
                                 :value="taskStore.currentTask.due_date || ''"
                                 @change="handleDueDateChange"
                                 class="w-full bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark rounded-xl px-2.5 py-1.5 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs"
@@ -209,11 +211,12 @@ onMounted(() => {
 
                         <!-- Project Selector -->
                         <div>
-                            <label class="block text-[11px] text-zinc-400 mb-1 flex items-center gap-1">
+                            <label for="task-editor-project" class="block text-[11px] text-zinc-600 dark:text-zinc-300 mb-1 flex items-center gap-1">
                                 <Folder class="w-3 h-3" />
                                 پروژه
                             </label>
                             <select
+                                id="task-editor-project"
                                 :value="taskStore.currentTask.project_id || ''"
                                 @change="handleProjectChange"
                                 class="w-full bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark rounded-xl px-2.5 py-1.5 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs truncate"
@@ -234,15 +237,16 @@ onMounted(() => {
 
                     <!-- Description Textarea -->
                     <div>
-                        <label class="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
+                        <label for="task-editor-description" class="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1.5">
                             توضیحات و یادداشت‌ها
                         </label>
                         <textarea
+                            id="task-editor-description"
                             :value="taskStore.currentTask.description || ''"
                             @blur="handleDescriptionBlur"
                             rows="4"
                             placeholder="یادداشت‌های بیشتر درباره این تسک بنویسید..."
-                            class="w-full p-3.5 rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors resize-y leading-relaxed"
+                            class="w-full p-3.5 rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-600 dark:placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors resize-y leading-relaxed"
                         ></textarea>
                     </div>
 
@@ -252,7 +256,7 @@ onMounted(() => {
                             <h4 class="text-xs font-bold text-zinc-700 dark:text-zinc-300">
                                 چک‌لیست زیرتسک‌ها
                             </h4>
-                            <span v-if="taskStore.currentTask.subtasks?.length" class="text-[11px] font-medium text-zinc-400">
+                            <span v-if="taskStore.currentTask.subtasks?.length" class="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
                                 {{ taskStore.currentTask.subtasks_completed_count }} از {{ taskStore.currentTask.subtasks_count }}
                             </span>
                         </div>
@@ -266,12 +270,13 @@ onMounted(() => {
                             >
                                 <div class="flex items-center gap-2.5 flex-1 min-w-0">
                                     <BaseCheckbox
+                                        :aria-label="subtask.title"
                                         :model-value="subtask.is_completed"
                                         @change="() => handleToggleSubtask(subtask.id)"
                                     />
                                     <span
                                         class="truncate font-medium transition-colors cursor-pointer"
-                                        :class="subtask.is_completed ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-200'"
+                                        :class="subtask.is_completed ? 'text-zinc-600 dark:text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-200'"
                                         @click="handleToggleSubtask(subtask.id)"
                                     >
                                         {{ subtask.title }}
@@ -281,8 +286,8 @@ onMounted(() => {
                                 <button
                                     type="button"
                                     @click="handleDeleteSubtask(subtask.id)"
-                                    class="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-rose-500 transition-opacity"
-                                    title="حذف زیرتسک"
+                                    class="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 p-1 text-zinc-400 hover:text-rose-500 transition-opacity"
+                                    title="حذف زیرتسک" aria-label="حذف زیرتسک"
                                 >
                                     <X class="w-3.5 h-3.5" />
                                 </button>
@@ -292,10 +297,11 @@ onMounted(() => {
                         <!-- Add Subtask Input -->
                         <form @submit.prevent="handleAddSubtask" class="flex items-center gap-2">
                             <input
+                                aria-label="افزودن زیرتسک"
                                 v-model="newSubtaskTitle"
                                 type="text"
                                 placeholder="+ افزودن مورد جدید به چک‌لیست (Enter)..."
-                                class="w-full px-3 py-2 rounded-xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                class="w-full px-3 py-2 rounded-xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-600 dark:placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-brand-500"
                             />
                         </form>
                     </div>

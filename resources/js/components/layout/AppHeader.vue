@@ -84,8 +84,8 @@ const userInitial = computed(() => {
                 title="جست‌وجو (Ctrl+K)"
             >
                 <Search class="w-3.5 h-3.5" />
-                <span class="hidden lg:inline text-zinc-400">جست‌وجو...</span>
-                <kbd class="hidden lg:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-700/60 text-zinc-500 dark:text-zinc-400">⌘K</kbd>
+                <span class="hidden lg:inline text-zinc-600 dark:text-zinc-300">جست‌وجو...</span>
+                <kbd class="hidden lg:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-700/60 text-zinc-700 dark:text-zinc-300">⌘K</kbd>
             </button>
 
             <!-- Theme Toggle -->

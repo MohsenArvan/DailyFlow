@@ -38,7 +38,7 @@ const dateBadgeVariant = computed(() => {
         class="group relative flex items-center justify-between gap-3.5 px-4 py-3 rounded-2xl border transition-all duration-150 font-vazir select-none"
         :class="[
             isCompleted
-                ? 'bg-zinc-50/70 dark:bg-zinc-900/40 border-surface-borderLight/60 dark:border-surface-borderDark/60 opacity-75'
+                ? 'bg-zinc-50/70 dark:bg-zinc-900/40 border-surface-borderLight/60 dark:border-surface-borderDark/60 '
                 : 'bg-surface-cardLight dark:bg-surface-cardDark border-surface-borderLight dark:border-surface-borderDark hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-xs shadow-subtle',
         ]"
     >
@@ -60,7 +60,7 @@ const dateBadgeVariant = computed(() => {
                     class="text-xs sm:text-sm font-medium leading-tight truncate transition-colors"
                     :class="[
                         isCompleted
-                            ? 'text-zinc-400 dark:text-zinc-500 line-through'
+                            ? 'text-zinc-600 dark:text-zinc-400 line-through'
                             : 'text-zinc-900 dark:text-zinc-100 group-hover:text-brand-600 dark:group-hover:text-brand-400',
                     ]"
                 >
@@ -70,7 +70,7 @@ const dateBadgeVariant = computed(() => {
                 <span v-if="task.tags?.length" class="mt-0.5 block truncate text-xs text-zinc-600 dark:text-zinc-300">
                     {{ task.tags.join('، ') }}
                 </span>
-                <p v-if="task.description && !isCompleted" class="text-[11px] text-zinc-400 truncate mt-0.5">
+                <p v-if="task.description && !isCompleted" class="text-[11px] text-zinc-600 dark:text-zinc-400 truncate mt-0.5">
                     {{ task.description }}
                 </p>
             </button>
