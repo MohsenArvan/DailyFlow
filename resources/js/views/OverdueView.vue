@@ -1,7 +1,15 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
+import { useTaskStore } from '@/stores/tasks';
 import AppLayout from '@/components/layout/AppLayout.vue';
-import BaseEmptyState from '@/components/ui/BaseEmptyState.vue';
-import { AlertCircle, CheckCircle2 } from 'lucide-vue-next';
+import TaskList from '@/components/task/TaskList.vue';
+import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-vue-next';
+
+const taskStore = useTaskStore();
+
+onMounted(async () => {
+    await taskStore.fetchTasks('overdue');
+});
 </script>
 
 <template>
@@ -16,15 +24,16 @@ import { AlertCircle, CheckCircle2 } from 'lucide-vue-next';
             </p>
         </div>
 
-        <div class="rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark p-8 shadow-subtle min-h-[340px] flex items-center justify-center">
-            <BaseEmptyState
-                title="عالی است! هیچ کار عقب‌افتاده‌ای ندارید"
-                description="تمام کارهایتان به‌موقع انجام شده‌اند و هیچ تسک معوقه‌ای باقی نمانده است."
-            >
-                <template #icon>
-                    <CheckCircle2 class="w-6 h-6 text-emerald-500 stroke-[2]" />
-                </template>
-            </BaseEmptyState>
+        <!-- Tasks Loading Spinner or Task List -->
+        <div v-if="taskStore.isLoading" class="flex items-center justify-center p-12 text-zinc-400">
+            <Loader2 class="w-7 h-7 animate-spin text-brand-500" />
         </div>
+
+        <TaskList
+            v-else
+            :tasks="taskStore.tasks"
+            empty-title="عالی است! هیچ کار عقب‌افتاده‌ای ندارید"
+            empty-description="تمام کارهایتان به‌موقع انجام شده‌اند و هیچ تسک معوقه‌ای باقی نمانده است."
+        />
     </AppLayout>
 </template>

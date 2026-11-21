@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useTaskStore } from '@/stores/tasks';
 import {
     CheckCircle2,
     Inbox,
@@ -35,14 +36,47 @@ const emit = defineEmits<{
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const taskStore = useTaskStore();
 
-const navItems = [
-    { name: 'صندوق ورودی', path: '/inbox', icon: Inbox, badge: null, color: 'text-zinc-600 dark:text-zinc-400' },
-    { name: 'امروز', path: '/today', icon: Calendar, badge: null, color: 'text-brand-600 dark:text-brand-400' },
-    { name: 'به‌زودی', path: '/upcoming', icon: CalendarDays, badge: null, color: 'text-violet-600 dark:text-violet-400' },
-    { name: 'عقب‌افتاده', path: '/overdue', icon: AlertCircle, badge: null, badgeColor: 'bg-rose-500 text-white', color: 'text-rose-500' },
-    { name: 'انجام‌شده', path: '/completed', icon: CheckSquare, badge: null, color: 'text-emerald-600 dark:text-emerald-400' },
-];
+const navItems = computed(() => [
+    {
+        name: 'صندوق ورودی',
+        path: '/inbox',
+        icon: Inbox,
+        badge: taskStore.counts.inbox > 0 ? taskStore.counts.inbox : null,
+        color: 'text-zinc-600 dark:text-zinc-400',
+    },
+    {
+        name: 'امروز',
+        path: '/today',
+        icon: Calendar,
+        badge: taskStore.counts.today > 0 ? taskStore.counts.today : null,
+        badgeColor: 'bg-brand-500/10 text-brand-600 dark:text-brand-400',
+        color: 'text-brand-600 dark:text-brand-400',
+    },
+    {
+        name: 'به‌زودی',
+        path: '/upcoming',
+        icon: CalendarDays,
+        badge: taskStore.counts.upcoming > 0 ? taskStore.counts.upcoming : null,
+        color: 'text-violet-600 dark:text-violet-400',
+    },
+    {
+        name: 'عقب‌افتاده',
+        path: '/overdue',
+        icon: AlertCircle,
+        badge: taskStore.counts.overdue > 0 ? taskStore.counts.overdue : null,
+        badgeColor: 'bg-rose-500 text-white',
+        color: 'text-rose-500',
+    },
+    {
+        name: 'انجام‌شده',
+        path: '/completed',
+        icon: CheckSquare,
+        badge: null,
+        color: 'text-emerald-600 dark:text-emerald-400',
+    },
+]);
 
 const isActive = (path: string) => route.path === path;
 
@@ -113,7 +147,7 @@ const handleLogout = async () => {
                     <span v-if="!collapsed || mobile" class="truncate flex-1 text-right">{{ item.name }}</span>
                     <span
                         v-if="item.badge && (!collapsed || mobile)"
-                        class="text-[10px] px-1.5 py-0.2 rounded-full font-bold"
+                        class="text-[10px] px-2 py-0.5 rounded-full font-bold leading-none shrink-0"
                         :class="item.badgeColor || 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300'"
                     >
                         {{ item.badge }}

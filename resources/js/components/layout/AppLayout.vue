@@ -4,10 +4,13 @@ import { useRoute } from 'vue-router';
 import AppSidebar from '@/components/layout/AppSidebar.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import ToastContainer from '@/components/ui/ToastContainer.vue';
+import TaskDetailPanel from '@/components/task/TaskDetailPanel.vue';
 import { useToast } from '@/composables/useToast';
+import { useTaskStore } from '@/stores/tasks';
 
 const route = useRoute();
 const toast = useToast();
+const taskStore = useTaskStore();
 
 const isSidebarCollapsed = ref(localStorage.getItem('dailyflow_sidebar_collapsed') === 'true');
 const isMobileDrawerOpen = ref(false);
@@ -32,7 +35,12 @@ const closeMobileDrawer = () => {
 };
 
 const handleQuickAdd = () => {
-    toast.info('فرم سریع ایجاد تسک در فاز ۵ فعال خواهد شد.');
+    const input = document.querySelector('input[placeholder*="افزودن تسک"]') as HTMLInputElement;
+    if (input) {
+        input.focus();
+    } else {
+        toast.info('از فرم سریع افزودن تسک در بالای صفحه استفاده کنید.');
+    }
 };
 
 const handleOpenSearch = () => {
@@ -40,19 +48,23 @@ const handleOpenSearch = () => {
 };
 
 const handleKeydown = (e: KeyboardEvent) => {
-    // Escape closes mobile drawer
     if (e.key === 'Escape' && isMobileDrawerOpen.value) {
         closeMobileDrawer();
     }
-    // Command/Control + K for search
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         handleOpenSearch();
     }
+    // 'q' key focuses quick add if not already typing in an input
+    if (e.key === 'q' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
+        e.preventDefault();
+        handleQuickAdd();
+    }
 };
 
-onMounted(() => {
+onMounted(async () => {
     window.addEventListener('keydown', handleKeydown);
+    await taskStore.fetchCounts();
 });
 
 onUnmounted(() => {
@@ -101,10 +113,13 @@ onUnmounted(() => {
             />
 
             <!-- Page Content -->
-            <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl w-full mx-auto">
+            <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-5xl w-full mx-auto">
                 <slot />
             </main>
         </div>
+
+        <!-- Task Details Slide-over Panel -->
+        <TaskDetailPanel />
 
         <!-- Global Toast Container -->
         <ToastContainer />

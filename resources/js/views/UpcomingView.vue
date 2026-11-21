@@ -1,55 +1,58 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
+import { useTaskStore } from '@/stores/tasks';
 import AppLayout from '@/components/layout/AppLayout.vue';
-import BaseEmptyState from '@/components/ui/BaseEmptyState.vue';
-import BaseButton from '@/components/ui/BaseButton.vue';
-import { useToast } from '@/composables/useToast';
-import { CalendarDays, Plus } from 'lucide-vue-next';
+import TaskQuickAdd from '@/components/task/TaskQuickAdd.vue';
+import TaskList from '@/components/task/TaskList.vue';
+import { CalendarDays, Loader2 } from 'lucide-vue-next';
 
-const toast = useToast();
+const taskStore = useTaskStore();
 
-const handleAddTask = () => {
-    toast.info('برنامه‌ریزی تسک‌های آینده در فاز ۵ فعال خواهد شد.');
+const formatLocalDate = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 };
+
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+const tomorrowDateString = formatLocalDate(tomorrow);
+
+onMounted(async () => {
+    await taskStore.fetchTasks('upcoming');
+});
 </script>
 
 <template>
     <AppLayout>
-        <div class="mb-6 flex items-center justify-between">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
                 <h2 class="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
                     <CalendarDays class="w-5 h-5 text-violet-500" />
-                    <span>برنامه‌ریزی آینده (به‌زودی)</span>
+                    <span>برنامه‌ریزی آینده (Upcoming)</span>
                 </h2>
                 <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                     مشاهده کارهای زمان‌بندی‌شده برای روزها و هفته‌های آتی
                 </p>
             </div>
-
-            <BaseButton variant="primary" size="sm" @click="handleAddTask">
-                <template #prefix>
-                    <Plus class="w-4 h-4 stroke-[2.5]" />
-                </template>
-                زمان‌بندی تسک
-            </BaseButton>
         </div>
 
-        <div class="rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark p-8 shadow-subtle min-h-[340px] flex items-center justify-center">
-            <BaseEmptyState
-                title="تسک زمان‌بندی‌شده‌ای برای روزهای آینده وجود ندارد"
-                description="برای هفته پیش‌رو برنامه‌ریزی کنید تا در روزهای آینده ذهنی آسوده داشته باشید."
-            >
-                <template #icon>
-                    <CalendarDays class="w-6 h-6 text-violet-400 stroke-[1.8]" />
-                </template>
-                <template #action>
-                    <BaseButton variant="outline" size="sm" @click="handleAddTask">
-                        <template #prefix>
-                            <Plus class="w-3.5 h-3.5" />
-                        </template>
-                        افزودن تسک آینده
-                    </BaseButton>
-                </template>
-            </BaseEmptyState>
+        <!-- Quick Add Form -->
+        <div class="mb-6">
+            <TaskQuickAdd :default-due-date="tomorrowDateString" />
         </div>
+
+        <!-- Tasks Loading Spinner or Task List -->
+        <div v-if="taskStore.isLoading" class="flex items-center justify-center p-12 text-zinc-400">
+            <Loader2 class="w-7 h-7 animate-spin text-brand-500" />
+        </div>
+
+        <TaskList
+            v-else
+            :tasks="taskStore.tasks"
+            empty-title="تسک زمان‌بندی‌شده‌ای برای روزهای آینده وجود ندارد"
+            empty-description="برای روزهای پیش‌رو برنامه‌ریزی کنید تا در ادامه هفته ذهنی آسوده داشته باشید."
+        />
     </AppLayout>
 </template>
