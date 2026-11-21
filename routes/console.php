@@ -22,7 +22,7 @@ Artisan::command('tasks:generate-recurring', function (GenerateNextRecurringTask
 Schedule::command('tasks:generate-recurring')->hourly()->withoutOverlapping();
 
 Artisan::command('tasks:check-reminders', function () {
-    Task::pending()->whereNull('reminder_delivered_at')->where('reminder_at', '<=', now())
+    Task::active()->whereNull('reminder_delivered_at')->where('reminder_at', '<=', now())
         ->eachById(fn ($task) => SendTaskReminderJob::dispatch($task->user_id, $task->id));
 });
 

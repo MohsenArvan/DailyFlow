@@ -35,7 +35,7 @@ const dateBadgeVariant = computed(() => {
 
 <template>
     <div
-        class="group relative flex items-center justify-between gap-3.5 px-4 py-3 rounded-2xl border transition-all duration-150 font-vazir select-none"
+        class="group relative flex items-center flex-wrap justify-between gap-2.5 px-3.5 py-3 rounded-xl sm:flex-nowrap border transition-all duration-150 font-vazir select-none"
         :class="[
             isCompleted
                 ? 'bg-zinc-50/70 dark:bg-zinc-900/40 border-surface-borderLight/60 dark:border-surface-borderDark/60 '
@@ -43,7 +43,7 @@ const dateBadgeVariant = computed(() => {
         ]"
     >
         <!-- Left (in RTL: Right) Section: Checkbox + Title -->
-        <div class="flex items-center gap-3.5 flex-1 min-w-0">
+        <div class="flex items-center gap-3 flex-1 min-w-[9rem]">
             <!-- Custom Checkbox -->
             <div @click.stop>
                 <BaseCheckbox
@@ -77,7 +77,8 @@ const dateBadgeVariant = computed(() => {
         </div>
 
         <!-- Right (in RTL: Left) Section: Badges & Actions -->
-        <div class="flex items-center gap-2 shrink-0 cursor-pointer" @click="handleItemClick">
+        <div class="flex flex-wrap items-center gap-1.5 cursor-pointer" @click="handleItemClick">
+            <span v-if="task.status === 'in_progress'" class="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-300">در حال انجام</span>
             <Repeat2 v-if="task.recurrence_rule" role="img" aria-label="تکرارشونده" class="size-4" />
             <Bell v-if="task.reminder_at" role="img" aria-label="یادآور دارد" class="size-4" />
             <time v-if="task.due_time" dir="ltr" class="text-xs">{{ task.due_time.slice(0, 5) }}</time>

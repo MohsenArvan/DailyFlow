@@ -3,6 +3,7 @@
 namespace App\Actions\Task;
 
 use App\Enums\TaskPriority;
+use App\Enums\TaskStatus;
 use App\Models\Task;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
@@ -11,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 
 class UpdateTaskAction
 {
+    public function __construct(private CompleteTaskAction $completeTask) {}
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -65,7 +68,16 @@ class UpdateTaskAction
                 $attributes['project_id'] = $data['project_id'];
             }
 
+            $status = isset($data['status']) ? TaskStatus::from($data['status']) : null;
+            if ($status !== null && $status !== TaskStatus::COMPLETED) {
+                $attributes['status'] = $status;
+                $attributes['completed_at'] = null;
+            }
             $task->update($attributes);
+
+            if ($status === TaskStatus::COMPLETED) {
+                return $this->completeTask->execute($task);
+            }
 
             return $task->fresh(['subtasks']);
         });

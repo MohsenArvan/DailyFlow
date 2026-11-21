@@ -133,7 +133,7 @@ const handleKeydown = (e: KeyboardEvent) => {
             ></div>
 
             <!-- Modal Content -->
-            <div ref="dialogRoot" role="dialog" aria-modal="true" tabindex="-1" @keydown="handleKeydown" :aria-label="modalTitle" class="relative w-full max-w-lg rounded-2xl bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark shadow-modal p-6 z-10 animate-in fade-in zoom-in-95 duration-150">
+            <div ref="dialogRoot" role="dialog" aria-modal="true" tabindex="-1" @keydown="handleKeydown" :aria-label="modalTitle" class="workspace-panel relative z-10 max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto p-5 shadow-modal sm:p-6">
                 <!-- Header -->
                 <div class="flex items-center justify-between pb-4 border-b border-surface-borderLight dark:border-surface-borderDark mb-5">
                     <h3 class="text-base font-bold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">

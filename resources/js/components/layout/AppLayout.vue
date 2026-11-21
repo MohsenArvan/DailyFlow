@@ -1,26 +1,28 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, nextTick, onMounted, onUnmounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import AppSidebar from '@/components/layout/AppSidebar.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
-import ToastContainer from '@/components/ui/ToastContainer.vue';
 import TaskDetailPanel from '@/components/task/TaskDetailPanel.vue';
 import CommandPalette from '@/components/common/CommandPalette.vue';
 import ProjectModal from '@/components/project/ProjectModal.vue';
 import { useTaskReminders } from '@/composables/useTaskReminders';
-import { useToast } from '@/composables/useToast';
+import { useDialogFocus } from '@/composables/useDialogFocus';
+import { X } from 'lucide-vue-next';
 import { useTaskStore } from '@/stores/tasks';
 import { useProjectStore } from '@/stores/projects';
 
 const route = useRoute();
 const palette = ref<InstanceType<typeof CommandPalette>>();
-const toast = useToast();
+const router = useRouter();
 useTaskReminders();
 const taskStore = useTaskStore();
 const projectStore = useProjectStore();
 
 const isSidebarCollapsed = ref(localStorage.getItem('dailyflow_sidebar_collapsed') === 'true');
 const isMobileDrawerOpen = ref(false);
+const mobileDrawer = ref<HTMLElement>();
+const trapDrawerFocus = useDialogFocus(mobileDrawer, () => isMobileDrawerOpen.value);
 
 const currentViewTitle = computed(() => {
     return (route.meta?.title as string) || 'DailyFlow';
@@ -41,31 +43,41 @@ const closeMobileDrawer = () => {
     document.body.style.overflow = '';
 };
 
-const handleQuickAdd = () => {
-    const input = document.querySelector('input[placeholder*="افزودن تسک"]') as HTMLInputElement;
-    if (input) {
-        input.focus();
-    } else {
-        toast.info('از فرم سریع افزودن تسک در بالای صفحه استفاده کنید.');
+const handleQuickAdd = async () => {
+    const selector = 'input[aria-label="عنوان تسک جدید"]';
+    if (!document.querySelector(selector) && route.name !== 'today') {
+        await router.push({ name: 'today' });
+        await nextTick();
     }
+    document.querySelector<HTMLInputElement>(selector)?.focus();
 };
 
 const handleOpenSearch = () => {
     void palette.value?.open();
 };
 
-const handleKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && isMobileDrawerOpen.value) {
+function handleDrawerKeydown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
+        event.preventDefault();
         closeMobileDrawer();
+        return;
     }
-    if ((e.metaKey || e.ctrlKey) && e.code === 'KeyK') {
-        e.preventDefault();
+    trapDrawerFocus(event);
+}
+
+const handleKeydown = (event: KeyboardEvent) => {
+    if (event.defaultPrevented || isMobileDrawerOpen.value || projectStore.isModalOpen || taskStore.isDetailsOpen
+        || document.querySelector('dialog[open]')) return;
+
+    if ((event.metaKey || event.ctrlKey) && event.code === 'KeyK') {
+        event.preventDefault();
         handleOpenSearch();
     }
-    // 'q' key focuses quick add if not already typing in an input
-    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key === 'q' && !['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
-        e.preventDefault();
-        handleQuickAdd();
+    const target = event.target as HTMLElement | null;
+    if (!event.ctrlKey && !event.metaKey && !event.altKey && event.key === 'q'
+        && !target?.closest('input, textarea, select, [contenteditable="true"]')) {
+        event.preventDefault();
+        void handleQuickAdd();
     }
 };
 
@@ -85,6 +97,9 @@ onUnmounted(() => {
 
 <template>
     <div class="min-h-screen flex bg-surface-light dark:bg-surface-dark text-zinc-900 dark:text-zinc-100 transition-colors font-vazir antialiased">
+        <a href="#workspace-content" class="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-surface-cardLight focus:p-3 focus:text-zinc-900">
+            رفتن به محتوای اصلی
+        </a>
         <!-- Desktop Sidebar -->
         <div class="hidden md:block shrink-0 sticky top-0 h-screen z-40">
             <AppSidebar
@@ -103,7 +118,11 @@ onUnmounted(() => {
                 ></div>
 
                 <!-- Slide-over drawer -->
-                <div class="fixed inset-y-0 right-0 max-w-full flex z-10 shadow-2xl animate-in slide-in-from-right duration-200">
+                <div ref="mobileDrawer" role="dialog" aria-modal="true" aria-label="منوی برنامه" tabindex="-1"
+                    class="fixed inset-y-0 right-0 z-10 flex max-w-full shadow-2xl" @keydown="handleDrawerKeydown">
+                    <button type="button" aria-label="بستن منو" class="absolute end-2 top-4 z-10 rounded-lg bg-surface-sidebarLight p-2 dark:bg-surface-sidebarDark" @click="closeMobileDrawer">
+                        <X aria-hidden="true" class="size-5" />
+                    </button>
                     <AppSidebar
                         :mobile="true"
                         @navigate="closeMobileDrawer"
@@ -123,7 +142,7 @@ onUnmounted(() => {
             />
 
             <!-- Page Content -->
-            <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-5xl w-full mx-auto">
+            <main id="workspace-content" tabindex="-1" class="mx-auto w-full max-w-[90rem] flex-1 px-4 py-6 sm:px-7 lg:px-10 lg:py-8">
                 <slot />
             </main>
         </div>
@@ -136,7 +155,5 @@ onUnmounted(() => {
 
         <CommandPalette ref="palette" />
 
-        <!-- Global Toast Container -->
-        <ToastContainer />
     </div>
 </template>

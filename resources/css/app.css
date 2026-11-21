@@ -6,22 +6,26 @@
 
 @layer base {
     :root {
-        --bg-app: #FBFBFA;
+        --focus-ring: #4c55c7;
+        --hero-wash: #e8ebff;
+        --bg-app: #f5f6fa;
         --bg-surface: #FFFFFF;
-        --bg-sidebar: #F7F7F5;
-        --bg-subtle: #F1F1EF;
-        --border-color: #E5E5E2;
+        --bg-sidebar: #fafbfe;
+        --bg-subtle: #eceff7;
+        --border-color: #dce1ed;
         --text-primary: #1C1917;
         --text-secondary: #78716C;
         --text-muted: #A8A29E;
     }
 
     .dark {
-        --bg-app: #121214;
-        --bg-surface: #18181B;
-        --bg-sidebar: #141416;
-        --bg-subtle: #222226;
-        --border-color: #2A2A30;
+        --focus-ring: #adb6ff;
+        --hero-wash: #2e3375;
+        --bg-app: #111421;
+        --bg-surface: #1a1e2f;
+        --bg-sidebar: #151827;
+        --bg-subtle: #22273b;
+        --border-color: #32384f;
         --text-primary: #FAFAFA;
         --text-secondary: #A1A1AA;
         --text-muted: #71717A;
@@ -77,5 +81,51 @@
     .no-scrollbar {
         -ms-overflow-style: none;  /* IE and Edge */
         scrollbar-width: none;  /* Firefox */
+    }
+}
+
+@layer base {
+    :where(a, button, input, select, textarea, summary):focus-visible {
+        outline: 2px solid var(--focus-ring);
+        outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}
+
+@layer components {
+    .workspace-panel {
+        @apply rounded-2xl border bg-surface-cardLight shadow-subtle dark:bg-surface-cardDark;
+    }
+
+    .workspace-hero {
+        @apply relative isolate overflow-hidden rounded-2xl border border-brand-200/70 bg-surface-cardLight dark:border-brand-800/60 dark:bg-surface-cardDark;
+        background-image: radial-gradient(ellipse at 0% 0%, var(--hero-wash), transparent 65%);
+    }
+
+    .board-column {
+        @apply bg-surface-subtleLight/70 dark:bg-surface-subtleDark/55;
+    }
+
+    .segmented-control {
+        @apply inline-flex max-w-full items-center gap-1 rounded-xl border bg-surface-subtleLight p-1 dark:bg-surface-subtleDark;
+    }
+
+    .segmented-control button {
+        @apply inline-flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium text-zinc-700 dark:text-zinc-300;
+    }
+
+    .segmented-control button[aria-pressed="true"] {
+        @apply bg-surface-cardLight font-bold text-brand-700 shadow-subtle dark:bg-surface-cardDark dark:text-brand-300;
+    }
+
+    .page-heading {
+        @apply mb-6 border-b pb-4 sm:mb-8 sm:pb-5;
     }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useTaskStore } from '@/stores/tasks';
@@ -94,6 +94,12 @@ const handleItemClick = () => {
     emit('navigate');
 };
 
+const handleCreateProject = async () => {
+    emit('navigate');
+    await nextTick();
+    projectStore.openCreateModal();
+};
+
 const handleLogout = async () => {
     await authStore.logout();
     router.push('/login');
@@ -138,13 +144,13 @@ const handleLogout = async () => {
             </div>
 
             <!-- Main Navigation Links -->
-            <div class="p-3 space-y-1">
+            <nav aria-label="ناوبری اصلی" class="px-3 py-4 space-y-1">
                 <router-link
                     v-for="item in navItems"
                     :key="item.path"
                     :to="item.path"
                     @click="handleItemClick"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all group relative"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors group relative"
                     :class="[
                         isActive(item.path)
                             ? 'bg-brand-500/10 text-brand-700 dark:text-brand-400 font-semibold shadow-xs'
@@ -163,7 +169,7 @@ const handleLogout = async () => {
                         {{ item.badge }}
                     </span>
                 </router-link>
-            </div>
+            </nav>
 
             <!-- Projects Section -->
             <div class="px-3 pt-4 border-t border-surface-borderLight/70 dark:border-surface-borderDark/70 mt-2">
@@ -171,7 +177,7 @@ const handleLogout = async () => {
                     <span class="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">پروژه‌ها</span>
                     <button
                         type="button"
-                        @click="projectStore.openCreateModal"
+                        @click="handleCreateProject"
                         class="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition-colors"
                         title="افزودن پروژه جدید" aria-label="افزودن پروژه جدید"
                     >
@@ -186,7 +192,7 @@ const handleLogout = async () => {
                         :key="proj.uuid"
                         :to="`/projects/${proj.uuid}`"
                         @click="handleItemClick"
-                        class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all group relative"
+                        class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-colors group relative"
                         :class="[
                             isActive(`/projects/${proj.uuid}`)
                                 ? 'bg-brand-500/10 text-brand-700 dark:text-brand-400 font-semibold shadow-xs'

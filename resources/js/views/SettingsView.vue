@@ -46,15 +46,15 @@ async function enableNotifications() {
 
 <template>
     <AppLayout>
-        <div class="mb-6">
-            <h2 class="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">تنظیمات حساب کاربری</h2>
+        <div class="page-heading">
+            <h2 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">تنظیمات حساب کاربری</h2>
             <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">مدیریت مشخصات فردی، ظاهر برنامه و امنیت حساب شما</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <!-- Sidebar / Tabs Navigation -->
             <div class="md:col-span-1">
-                <nav class="flex md:flex-col gap-1.5 p-1 rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark">
+                <nav class="flex flex-wrap md:flex-col gap-1.5 p-1 rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark">
                     <button
                         v-for="tab in tabs"
                         :key="tab.id"
@@ -72,7 +72,7 @@ async function enableNotifications() {
 
             <!-- Tab Content Pane -->
             <div class="md:col-span-3">
-                <div class="rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark p-6 sm:p-8 shadow-sm">
+                <div class="workspace-panel p-5 sm:p-8">
                     <ProfileSettingsTab v-if="activeTab === 'profile'" />
                     <PreferencesSettingsTab v-else-if="activeTab === 'preferences'" />
                     <SecuritySettingsTab v-else-if="activeTab === 'security'" />

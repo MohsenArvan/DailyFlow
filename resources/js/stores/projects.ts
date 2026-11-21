@@ -12,6 +12,7 @@ export const useProjectStore = defineStore('projects', () => {
     const modalMode = ref<'create' | 'edit'>('create');
     const editingProject = ref<Project | null>(null);
     const toast = useToast();
+    let detailRequest = 0;
 
     const favoriteProjects = computed(() => projects.value.filter(p => p.is_favorite));
     const standardProjects = computed(() => projects.value.filter(p => !p.is_favorite));
@@ -32,17 +33,18 @@ export const useProjectStore = defineStore('projects', () => {
     }
 
     async function fetchProject(uuid: string): Promise<Project | null> {
+        const request = ++detailRequest;
         isLoading.value = true;
         try {
             const response = await api.get<{ data: Project }>(`/projects/${uuid}`);
-            currentProject.value = response.data.data;
+            if (request === detailRequest) currentProject.value = response.data.data;
             return response.data.data;
         } catch (err) {
             console.error('Failed to fetch project:', err);
-            toast.error('خطا در یافتن پروژه.');
+            if (request === detailRequest) toast.error('خطا در یافتن پروژه.');
             return null;
         } finally {
-            isLoading.value = false;
+            if (request === detailRequest) isLoading.value = false;
         }
     }
 

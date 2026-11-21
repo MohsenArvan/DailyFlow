@@ -33,10 +33,10 @@ onMounted(async () => {
 <template>
     <AppLayout>
         <!-- Top Date & Goal Summary -->
-        <div class="mb-6 p-6 rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark shadow-card">
+        <div class="workspace-hero mb-6 p-5 sm:p-7">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
-                    <h2 class="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                    <h2 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
                         <Calendar class="w-5 h-5 text-brand-600 dark:text-brand-400" />
                         <span>کارهای امروز</span>
                         <span class="text-xs font-normal text-zinc-400">({{ todayFormatted }})</span>
@@ -46,7 +46,7 @@ onMounted(async () => {
                     </p>
                 </div>
 
-                <div v-if="completedToday >= dailyGoal" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                <div v-if="completedToday >= dailyGoal" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 text-xs font-semibold">
                     <Sparkles class="w-4 h-4" />
                     <span>هدف روزانه محقق شد!</span>
                 </div>

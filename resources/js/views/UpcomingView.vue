@@ -27,9 +27,9 @@ onMounted(async () => {
 
 <template>
     <AppLayout>
-        <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="page-heading flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <h2 class="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+                <h2 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
                     <CalendarDays class="w-5 h-5 text-violet-500" />
                     <span>برنامه‌ریزی آینده (Upcoming)</span>
                 </h2>

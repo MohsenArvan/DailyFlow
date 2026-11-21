@@ -38,7 +38,7 @@ class ProductivityMetricsService
         }
 
         $projects = $user->projects()->reorder()->orderBy('name')
-            ->withCount(['tasks as active_count' => fn ($query) => $query->forUser($user->id)->pending()])
+            ->withCount(['tasks as active_count' => fn ($query) => $query->forUser($user->id)->active()])
             ->get()->map(fn ($project) => [
                 'id' => $project->uuid,
                 'name' => $project->name,

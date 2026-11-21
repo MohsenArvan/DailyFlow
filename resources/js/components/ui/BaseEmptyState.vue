@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Sparkles } from 'lucide-vue-next';
+import { Inbox } from 'lucide-vue-next';
 
 interface Props {
     title: string;
@@ -11,9 +11,9 @@ defineProps<Props>();
 
 <template>
     <div class="py-12 px-4 text-center max-w-sm mx-auto font-vazir">
-        <div class="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 border border-surface-borderLight dark:border-surface-borderDark text-zinc-500 dark:text-zinc-400 mx-auto flex items-center justify-center mb-3.5 shadow-sm">
+        <div class="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-950 border border-surface-borderLight dark:border-surface-borderDark text-brand-700 dark:text-brand-300 mx-auto flex items-center justify-center mb-3.5 shadow-sm">
             <slot name="icon">
-                <Sparkles class="w-5 h-5 stroke-[1.8]" />
+                <Inbox aria-hidden="true" class="w-5 h-5 stroke-[1.8]" />
             </slot>
         </div>
 

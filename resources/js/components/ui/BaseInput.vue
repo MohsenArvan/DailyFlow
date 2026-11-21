@@ -62,8 +62,10 @@ const handleClear = () => {
                 :value="modelValue"
                 :placeholder="placeholder"
                 :disabled="disabled"
+                :aria-invalid="!!error"
+                :aria-describedby="error || hint ? inputId + '-message' : undefined"
                 @input="handleInput"
-                class="w-full py-2.5 rounded-xl border bg-surface-subtleLight dark:bg-surface-subtleDark text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full py-2.5 rounded-xl border bg-surface-subtleLight dark:bg-surface-subtleDark text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-600 dark:placeholder-zinc-400 focus:outline-none focus:ring-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 :class="[
                     $slots.prefix ? 'pr-10' : 'pr-3.5',
                     $slots.suffix || clearable ? 'pl-10' : 'pl-3.5',
@@ -74,13 +76,15 @@ const handleClear = () => {
             />
 
             <!-- Clear button or Suffix slot -->
-            <div
+            <button
                 v-if="clearable && modelValue && !disabled"
+                type="button"
+                aria-label="پاک کردن ورودی"
                 @click="handleClear"
                 class="absolute inset-y-0 left-0 pl-3 flex items-center cursor-pointer text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
             >
-                <X class="w-4 h-4" />
-            </div>
+                <X aria-hidden="true" class="w-4 h-4" />
+            </button>
             <div
                 v-else-if="$slots.suffix"
                 class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-zinc-400"
@@ -89,10 +93,10 @@ const handleClear = () => {
             </div>
         </div>
 
-        <p v-if="error" class="mt-1 text-[11px] text-rose-500 font-medium">
+        <p v-if="error" :id="inputId + '-message'" role="status" class="mt-1 text-xs font-medium text-rose-700 dark:text-rose-300">
             {{ error }}
         </p>
-        <p v-else-if="hint" class="mt-1 text-[11px] text-zinc-400">
+        <p v-else-if="hint" :id="inputId + '-message'" class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
             {{ hint }}
         </p>
     </div>

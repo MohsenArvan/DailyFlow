@@ -32,7 +32,7 @@ const variantClasses = computed(() => {
             return 'bg-rose-600 hover:bg-rose-500 text-white shadow-sm shadow-rose-600/20 border-transparent';
         case 'primary':
         default:
-            return 'bg-brand-600 hover:bg-brand-500 text-white shadow-sm shadow-brand-600/25 border-transparent';
+            return 'bg-brand-600 hover:bg-brand-700 text-white shadow-sm shadow-brand-600/25 border-transparent';
     }
 });
 
@@ -41,12 +41,12 @@ const sizeClasses = computed(() => {
         case 'xs':
             return 'px-2.5 py-1 text-[11px] rounded-lg gap-1.5';
         case 'sm':
-            return 'px-3 py-1.5 text-xs rounded-xl gap-1.5';
+            return 'min-h-9 px-3 py-1.5 text-sm rounded-xl gap-1.5';
         case 'lg':
             return 'px-5 py-3 text-base rounded-2xl gap-2.5';
         case 'md':
         default:
-            return 'px-4 py-2 text-xs font-medium rounded-xl gap-2';
+            return 'min-h-10 px-4 py-2 text-sm font-semibold rounded-xl gap-2';
     }
 });
 </script>
@@ -55,7 +55,7 @@ const sizeClasses = computed(() => {
     <button
         :type="type"
         :disabled="disabled || loading"
-        class="inline-flex items-center justify-center font-vazir select-none transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-500/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+        class="inline-flex items-center justify-center font-vazir select-none transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 dark:focus-visible:ring-brand-300 dark:focus-visible:ring-offset-surface-cardDark disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
         :class="[variantClasses, sizeClasses, block ? 'w-full' : '']"
     >
         <Loader2 v-if="loading" class="w-3.5 h-3.5 animate-spin shrink-0" />

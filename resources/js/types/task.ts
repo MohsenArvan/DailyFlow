@@ -2,7 +2,7 @@ import type { Project } from '@/types/project';
 
 export type TaskPriority = 'none' | 'low' | 'medium' | 'high' | 'urgent';
 
-export type TaskStatus = 'pending' | 'completed';
+export type TaskStatus = 'pending' | 'in_progress' | 'completed';
 
 export interface RecurrenceRule {
     frequency: 'daily' | 'weekdays' | 'weekly' | 'monthly' | 'yearly' | 'custom';
@@ -60,6 +60,7 @@ export interface CreateTaskPayload {
 }
 
 export interface UpdateTaskPayload {
+    status?: TaskStatus;
     title?: string;
     description?: string | null;
     tags?: string[];

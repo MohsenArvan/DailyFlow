@@ -31,8 +31,8 @@ onMounted(async () => {
 
 <template>
     <AppLayout>
-        <div class="mb-6">
-            <h2 class="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+        <div class="page-heading">
+            <h2 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
                 <CheckSquare class="w-5 h-5 text-emerald-500" />
                 <span>کارهای تکمیل‌شده</span>
             </h2>

@@ -32,7 +32,10 @@ test('registration, protected views and login persist across reload', async ({ p
     await expect(page).toHaveURL(/\/login/);
     await page.locator('#email').fill(credentials.email);
     await page.locator('#password').fill(credentials.password);
-    await page.locator('button[type=submit]').click();
+    await Promise.all([
+        page.waitForResponse(response => response.url().endsWith('/auth/login') && response.ok()),
+        page.locator('button[type=submit]').click(),
+    ]);
     await expect(page).toHaveURL(/\/today$/);
 });
 
@@ -97,4 +100,46 @@ test('creating a favorite project makes it available in the sidebar', async ({ p
     await addTask(page, 'Project progress task');
     await page.getByRole('checkbox', { name: 'Project progress task' }).click();
     await expect(page.getByText('1 از 1 تسک (100٪)')).toBeVisible();
+});
+
+test('kanban drag and mobile status selection persist across reloads', async ({ page }) => {
+    await register(page);
+    await page.goto('/projects');
+    await page.getByRole('button', { name: /پروژه جدید/ }).first().click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByPlaceholder(/مثلاً: طراحی/).fill('Board project');
+    await dialog.locator('button[type=submit]').click();
+    await page.locator('aside').getByText('Board project', { exact: true }).first().click();
+    await addTask(page, 'Board task');
+    const boardMode = page.getByRole('button', { name: 'کانبان', exact: true });
+    await boardMode.click();
+    await expect(boardMode).toHaveAttribute('aria-pressed', 'true');
+
+    const pending = page.getByRole('region', { name: 'در انتظار', exact: true });
+    const progress = page.getByRole('region', { name: 'در حال انجام', exact: true });
+    const completed = page.getByRole('region', { name: 'انجام‌شده', exact: true });
+    await pending.getByRole('listitem').filter({ hasText: 'Board task' }).getByTitle('کشیدن تسک').dragTo(progress);
+    await expect(progress.getByRole('button', { name: 'Board task' })).toBeVisible();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    await expect(boardMode).toHaveAttribute('aria-pressed', 'true');
+    await progress.getByRole('combobox', { name: 'وضعیت Board task' }).selectOption('completed');
+    await expect(completed.getByRole('button', { name: 'Board task' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'منو', exact: true }).click();
+    const menu = page.getByRole('dialog', { name: 'منوی برنامه' });
+    await expect(menu.getByRole('button', { name: 'بستن منو' })).toBeFocused();
+    await menu.getByRole('button', { name: 'افزودن پروژه جدید' }).click();
+    await expect(menu).toBeHidden();
+    const mobileProject = page.getByRole('dialog', { name: 'پروژه جدید' });
+    await expect(mobileProject).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(mobileProject).toBeHidden();
+    await page.getByRole('button', { name: 'منو', exact: true }).click();
+    await menu.getByRole('link', { name: 'داشبورد' }).click();
+    await expect(page.getByText('100٪')).toBeVisible();
+    await page.getByRole('button', { name: 'تغییر تم' }).click();
+    await expect(page.getByRole('button', { name: '۳۰ روز' })).toBeVisible();
+    expect(await page.locator('html').evaluate(el => el.scrollWidth <= window.innerWidth)).toBe(true);
 });

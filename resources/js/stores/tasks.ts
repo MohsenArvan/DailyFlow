@@ -35,7 +35,7 @@ export const useTaskStore = defineStore('tasks', () => {
         revision.value++;
     }
 
-    const pendingTasks = computed(() => tasks.value.filter(t => t.status === 'pending'));
+    const pendingTasks = computed(() => tasks.value.filter(t => t.status !== 'completed'));
     const completedTasks = computed(() => tasks.value.filter(t => t.status === 'completed'));
 
     async function fetchCounts(): Promise<void> {
@@ -118,17 +118,6 @@ export const useTaskStore = defineStore('tasks', () => {
     }
 
     async function completeTask(uuid: string): Promise<void> {
-        // Optimistic UI update
-        const task = tasks.value.find(t => t.uuid === uuid);
-        if (task) {
-            task.status = 'completed';
-            task.completed_at = new Date().toISOString();
-            task.subtasks_progress = 100;
-            if (task.subtasks) {
-                task.subtasks.forEach(s => { s.is_completed = true; });
-            }
-        }
-
         try {
             const response = await api.post<{ message: string; task: Task }>(`/tasks/${uuid}/complete`);
             const completed = response.data.task;
@@ -144,18 +133,11 @@ export const useTaskStore = defineStore('tasks', () => {
         } catch (err) {
             console.error('Failed to complete task:', err);
             toast.error('خطا در تکمیل تسک.');
-            // Revert on failure
-            if (task) task.status = 'pending';
+
         }
     }
 
     async function reopenTask(uuid: string): Promise<void> {
-        const task = tasks.value.find(t => t.uuid === uuid);
-        if (task) {
-            task.status = 'pending';
-            task.completed_at = null;
-        }
-
         try {
             const response = await api.post<{ message: string; task: Task }>(`/tasks/${uuid}/reopen`);
             const reopened = response.data.task;
@@ -171,7 +153,6 @@ export const useTaskStore = defineStore('tasks', () => {
         } catch (err) {
             console.error('Failed to reopen task:', err);
             toast.error('خطا در بازگشایی تسک.');
-            if (task) task.status = 'completed';
         }
     }
 

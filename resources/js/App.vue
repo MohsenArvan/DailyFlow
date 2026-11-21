@@ -20,9 +20,9 @@ onMounted(async () => {
 <template>
     <div class="min-h-screen flex flex-col bg-surface-light dark:bg-surface-dark text-zinc-900 dark:text-zinc-100 transition-colors duration-200 font-vazir">
         <AppNavbar v-if="showNavbar" />
-        <main class="flex-1 flex flex-col">
+        <component :is="showNavbar && route.path !== '/' ? 'main' : 'div'" class="flex flex-1 flex-col">
             <RouterView />
-        </main>
+        </component>
         <ToastContainer />
     </div>
 </template>

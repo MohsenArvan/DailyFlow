@@ -17,7 +17,7 @@ class SendTaskReminderJob implements ShouldQueue
     public function handle(): void
     {
         DB::transaction(function () {
-            $task = Task::forUser($this->userId)->pending()
+            $task = Task::forUser($this->userId)->active()
                 ->whereNull('reminder_delivered_at')->where('reminder_at', '<=', now())
                 ->lockForUpdate()->find($this->taskId);
 

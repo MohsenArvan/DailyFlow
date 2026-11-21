@@ -39,7 +39,7 @@ it('returns only the current user’s search results and exports', function () {
 });
 
 it('delivers a reminder once and only to its owner', function () {
-    $task = Task::factory()->create(['reminder_at' => now()->subMinute()]);
+    $task = Task::factory()->create(['status' => 'in_progress', 'reminder_at' => now()->subMinute()]);
     $this->artisan('tasks:check-reminders')->assertSuccessful();
     $this->artisan('tasks:check-reminders')->assertSuccessful();
 

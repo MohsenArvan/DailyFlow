@@ -1,16 +1,19 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProjectStore } from '@/stores/projects';
 import { useTaskStore } from '@/stores/tasks';
 import api from '@/services/api';
 import type { Task } from '@/types/task';
+import ProjectBoard from '@/components/project/ProjectBoard.vue';
 import AppLayout from '@/components/layout/AppLayout.vue';
 import TaskQuickAdd from '@/components/task/TaskQuickAdd.vue';
 import TaskList from '@/components/task/TaskList.vue';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import {
     ArrowRight,
+    Columns3,
+    List,
     Star,
     Edit2,
     Trash2,
@@ -30,10 +33,23 @@ const router = useRouter();
 const projectStore = useProjectStore();
 const taskStore = useTaskStore();
 
-const projectTasks = ref<Task[]>([]);
-const isLoadingTasks = ref(false);
+const modeSaving = ref(false);
+const loadError = ref(false);
+let request = 0;
+let loadedProject: string | undefined;
+const isLoadingTasks = ref(true);
 
-const project = computed(() => projectStore.currentProject);
+const project = computed(() => projectStore.currentProject?.uuid === route.params.uuid ? projectStore.currentProject : null);
+
+async function setView(mode: 'list' | 'board') {
+    if (!project.value || modeSaving.value || mode === project.value.view_mode) return;
+    modeSaving.value = true;
+    try {
+        await projectStore.updateProject(project.value.uuid, { view_mode: mode });
+    } finally {
+        modeSaving.value = false;
+    }
+}
 
 const iconComponent = computed(() => {
     switch (project.value?.icon) {
@@ -51,26 +67,27 @@ const iconComponent = computed(() => {
 
 const loadProjectData = async () => {
     const uuid = route.params.uuid as string;
+    const revision = ++request;
     if (!uuid) return;
-
-    const p = await projectStore.fetchProject(uuid);
-    if (!p) {
-        router.push('/projects');
-        return;
-    }
-
-    isLoadingTasks.value = true;
+    isLoadingTasks.value = loadedProject !== uuid;
+    loadError.value = false;
     try {
+        const p = await projectStore.fetchProject(uuid);
+        if (revision !== request) return;
+        if (!p) {
+            loadError.value = true;
+            return;
+        }
         const response = await api.get<{ data: Task[] }>('/tasks', {
             params: { project_id: p.id },
         });
-        projectTasks.value = response.data.data;
-        // Also keep taskStore tasks aligned for detail panel and actions
+        if (revision !== request) return;
         taskStore.tasks = response.data.data;
-    } catch (err) {
-        console.error('Failed to load project tasks:', err);
+        loadedProject = uuid;
+    } catch {
+        if (revision === request) loadError.value = true;
     } finally {
-        isLoadingTasks.value = false;
+        if (revision === request) isLoadingTasks.value = false;
     }
 };
 
@@ -81,9 +98,8 @@ watch(
     }
 );
 
-onMounted(() => {
-    loadProjectData();
-});
+onMounted(loadProjectData);
+onBeforeUnmount(() => { request++; });
 
 const handleToggleFavorite = () => {
     if (project.value) {
@@ -110,7 +126,11 @@ const handleDelete = async () => {
 <template>
     <AppLayout>
         <!-- Loading State -->
-        <div v-if="projectStore.isLoading && !project" class="flex items-center justify-center p-20 text-zinc-400">
+        <p v-if="loadError && !project" role="alert" class="workspace-panel p-5">
+            دریافت پروژه ممکن نشد.
+            <button type="button" class="font-semibold underline" @click="loadProjectData">تلاش دوباره</button>
+        </p>
+        <div v-else-if="projectStore.isLoading && !project" class="flex items-center justify-center p-20 text-zinc-400">
             <Loader2 class="w-8 h-8 animate-spin text-brand-500" />
         </div>
 
@@ -160,7 +180,7 @@ const handleDelete = async () => {
             </div>
 
             <!-- Project Banner & Progress -->
-            <div class="p-6 rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark shadow-card">
+            <div class="workspace-panel p-5 sm:p-7">
                 <div class="flex items-start gap-4 mb-4">
                     <div
                         class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm"
@@ -183,7 +203,7 @@ const handleDelete = async () => {
                 <div class="pt-3 border-t border-surface-borderLight dark:border-surface-borderDark">
                     <div class="flex justify-between items-center text-xs mb-1.5">
                         <span class="font-medium text-zinc-600 dark:text-zinc-400">پیشرفت کل پروژه</span>
-                        <span class="font-bold" :style="{ color: project.color }">
+                        <span class="font-bold tabular-nums text-zinc-800 dark:text-zinc-100">
                             {{ project.completed_tasks_count }} از {{ project.tasks_count }} تسک ({{ project.progress_percentage }}٪)
                         </span>
                     </div>
@@ -199,6 +219,17 @@ const handleDelete = async () => {
                 </div>
             </div>
 
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h3 class="text-lg font-bold">تسک‌های پروژه</h3>
+                <div aria-label="نمای پروژه" role="group" class="segmented-control">
+                    <button type="button" :aria-pressed="project.view_mode === 'list'" :disabled="modeSaving" @click="setView('list')">
+                        <List aria-hidden="true" class="size-4" /> لیست
+                    </button>
+                    <button type="button" :aria-pressed="project.view_mode === 'board'" :disabled="modeSaving" @click="setView('board')">
+                        <Columns3 aria-hidden="true" class="size-4" /> کانبان
+                    </button>
+                </div>
+            </div>
             <!-- Project Scoped Quick Add -->
             <div>
                 <TaskQuickAdd :project-id="project.id" />
@@ -209,6 +240,11 @@ const handleDelete = async () => {
                 <Loader2 class="w-7 h-7 animate-spin text-brand-500" />
             </div>
 
+            <p v-else-if="loadError" role="alert" class="workspace-panel p-5">
+                دریافت تسک‌ها ممکن نشد.
+                <button type="button" class="font-semibold underline" @click="loadProjectData">تلاش دوباره</button>
+            </p>
+            <ProjectBoard v-else-if="project.view_mode === 'board'" :key="project.uuid" :tasks="taskStore.tasks" />
             <TaskList
                 v-else
                 :tasks="taskStore.tasks"
