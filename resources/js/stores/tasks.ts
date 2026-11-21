@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import api from '@/services/api';
+import { useDashboardStore } from './dashboard';
 import type {
     Task,
     Subtask,
@@ -25,8 +26,16 @@ export const useTaskStore = defineStore('tasks', () => {
     const isDetailsOpen = ref<boolean>(false);
     const activeView = ref<string>('today');
     const toast = useToast();
+    const revision = ref(0);
+    const dashboard = useDashboardStore();
+    let taskRequest = 0;
 
-    const pendingTasks = computed(() => tasks.value.filter(t => t.status === 'pending'));
+    function notifyMutation() {
+        dashboard.invalidate();
+        revision.value++;
+    }
+
+    const pendingTasks = computed(() => tasks.value.filter(t => t.status !== 'completed'));
     const completedTasks = computed(() => tasks.value.filter(t => t.status === 'completed'));
 
     async function fetchCounts(): Promise<void> {
@@ -38,20 +47,25 @@ export const useTaskStore = defineStore('tasks', () => {
         }
     }
 
-    async function fetchTasks(view: string = 'today', search?: string): Promise<void> {
+    async function fetchTasks(view: string = 'today', search?: string, signal?: AbortSignal): Promise<boolean> {
+        const request = ++taskRequest;
         isLoading.value = true;
         activeView.value = view;
         try {
             const params: Record<string, string> = { view };
             if (search) params.search = search;
-            const response = await api.get<{ data: Task[] }>('/tasks', { params });
+            const response = await api.get<{ data: Task[] }>('/tasks', { params, ...(signal ? { signal } : {}) });
+            if (request !== taskRequest || signal?.aborted) return false;
             tasks.value = response.data.data;
             await fetchCounts();
+            return request === taskRequest && !signal?.aborted;
         } catch (err) {
+            if (request !== taskRequest || signal?.aborted) return false;
             console.error('Failed to fetch tasks:', err);
             toast.error('خطا در دریافت لیست تسک‌ها.');
+            return false;
         } finally {
-            isLoading.value = false;
+            if (request === taskRequest) isLoading.value = false;
         }
     }
 
@@ -70,6 +84,7 @@ export const useTaskStore = defineStore('tasks', () => {
                 tasks.value.unshift(newTask);
             }
 
+            notifyMutation();
             await fetchCounts();
             toast.success('تسک با موفقیت ایجاد شد.');
             return newTask;
@@ -94,6 +109,7 @@ export const useTaskStore = defineStore('tasks', () => {
                 currentTask.value = updated;
             }
 
+            notifyMutation();
             await fetchCounts();
             return updated;
         } catch (err: any) {
@@ -104,17 +120,6 @@ export const useTaskStore = defineStore('tasks', () => {
     }
 
     async function completeTask(uuid: string): Promise<void> {
-        // Optimistic UI update
-        const task = tasks.value.find(t => t.uuid === uuid);
-        if (task) {
-            task.status = 'completed';
-            task.completed_at = new Date().toISOString();
-            task.subtasks_progress = 100;
-            if (task.subtasks) {
-                task.subtasks.forEach(s => { s.is_completed = true; });
-            }
-        }
-
         try {
             const response = await api.post<{ message: string; task: Task }>(`/tasks/${uuid}/complete`);
             const completed = response.data.task;
@@ -125,22 +130,16 @@ export const useTaskStore = defineStore('tasks', () => {
             if (currentTask.value?.uuid === uuid) {
                 currentTask.value = completed;
             }
+            notifyMutation();
             await fetchCounts();
         } catch (err) {
             console.error('Failed to complete task:', err);
             toast.error('خطا در تکمیل تسک.');
-            // Revert on failure
-            if (task) task.status = 'pending';
+
         }
     }
 
     async function reopenTask(uuid: string): Promise<void> {
-        const task = tasks.value.find(t => t.uuid === uuid);
-        if (task) {
-            task.status = 'pending';
-            task.completed_at = null;
-        }
-
         try {
             const response = await api.post<{ message: string; task: Task }>(`/tasks/${uuid}/reopen`);
             const reopened = response.data.task;
@@ -151,11 +150,11 @@ export const useTaskStore = defineStore('tasks', () => {
             if (currentTask.value?.uuid === uuid) {
                 currentTask.value = reopened;
             }
+            notifyMutation();
             await fetchCounts();
         } catch (err) {
             console.error('Failed to reopen task:', err);
             toast.error('خطا در بازگشایی تسک.');
-            if (task) task.status = 'completed';
         }
     }
 
@@ -166,6 +165,7 @@ export const useTaskStore = defineStore('tasks', () => {
             if (currentTask.value?.uuid === uuid) {
                 closeDetails();
             }
+            notifyMutation();
             await fetchCounts();
             toast.success('تسک حذف شد.');
             return true;
@@ -192,18 +192,14 @@ export const useTaskStore = defineStore('tasks', () => {
             const response = await api.post<{ message: string; subtask: Subtask }>(`/tasks/${taskUuid}/subtasks`, { title });
             const subtask = response.data.subtask;
 
-            const task = tasks.value.find(t => t.uuid === taskUuid);
-            if (task) {
-                if (!task.subtasks) task.subtasks = [];
+            const listed = tasks.value.find(task => task.uuid === taskUuid);
+            const selected = currentTask.value?.uuid === taskUuid ? currentTask.value : null;
+            for (const task of new Set([listed, selected])) {
+                if (!task) continue;
+                task.subtasks ??= [];
                 task.subtasks.push(subtask);
                 task.subtasks_count++;
                 task.subtasks_progress = Math.round((task.subtasks_completed_count / task.subtasks_count) * 100);
-            }
-
-            if (currentTask.value?.uuid === taskUuid) {
-                if (!currentTask.value.subtasks) currentTask.value.subtasks = [];
-                currentTask.value.subtasks.push(subtask);
-                currentTask.value.subtasks_count++;
             }
 
             return subtask;
@@ -283,6 +279,7 @@ export const useTaskStore = defineStore('tasks', () => {
 
     return {
         tasks,
+        revision,
         currentTask,
         counts,
         isLoading,

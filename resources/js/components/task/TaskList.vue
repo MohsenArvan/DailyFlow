@@ -44,7 +44,7 @@ const handleSelectTask = (task: Task) => {
 
         <div
             v-else
-            class="rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark p-8 shadow-subtle min-h-[280px] flex items-center justify-center"
+            class="workspace-panel flex min-h-[220px] items-center justify-center border-dashed p-4"
         >
             <BaseEmptyState
                 :title="emptyTitle"

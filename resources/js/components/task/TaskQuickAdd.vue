@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import CalendarField from '@/components/ui/CalendarField.vue';
+import { useAgendaDates } from '@/composables/useAgendaDates';
 import { useTaskStore } from '@/stores/tasks';
 import type { TaskPriority } from '@/types/task';
 import { Plus, Calendar, Flag, Loader2 } from 'lucide-vue-next';
@@ -19,16 +21,12 @@ const taskStore = useTaskStore();
 const isExpanded = ref(false);
 const title = ref('');
 const priority = ref<TaskPriority>('medium');
+const tags = ref('');
 const dueDate = ref<string | null>(props.defaultDueDate);
 const isSubmitting = ref(false);
 const inputRef = ref<HTMLInputElement | null>(null);
 
-const formatLocalDate = (d: Date = new Date()): string => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
+const { offsetDate } = useAgendaDates();
 
 const setPriority = (p: TaskPriority) => {
     priority.value = p;
@@ -38,11 +36,9 @@ const setDateShortcut = (shortcut: 'today' | 'tomorrow' | 'none') => {
     if (shortcut === 'none') {
         dueDate.value = null;
     } else if (shortcut === 'today') {
-        dueDate.value = formatLocalDate(new Date());
+        dueDate.value = offsetDate(0);
     } else if (shortcut === 'tomorrow') {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        dueDate.value = formatLocalDate(tomorrow);
+        dueDate.value = offsetDate(1);
     }
 };
 
@@ -51,14 +47,17 @@ const handleSubmit = async () => {
 
     isSubmitting.value = true;
     try {
-        await taskStore.createTask({
+        const task = await taskStore.createTask({
             title: title.value.trim(),
+            tags: [...new Set(tags.value.split(/[,،]/).map(tag => tag.trim()).filter(Boolean))],
             priority: priority.value,
             due_date: dueDate.value,
             project_id: props.projectId,
         });
 
+        if (!task) return;
         title.value = '';
+        tags.value = '';
         priority.value = 'medium';
         dueDate.value = props.defaultDueDate;
         inputRef.value?.focus();
@@ -93,6 +92,7 @@ const handleKeydown = (e: KeyboardEvent) => {
                     ref="inputRef"
                     v-model="title"
                     type="text"
+                    aria-label="عنوان تسک جدید"
                     placeholder="افزودن تسک جدید... (Enter برای ثبت)"
                     @focus="isExpanded = true"
                     @keydown="handleKeydown"
@@ -116,6 +116,8 @@ const handleKeydown = (e: KeyboardEvent) => {
             >
                 <!-- Date Shortcuts -->
                 <div class="flex items-center gap-1.5">
+                    <input v-model="tags" type="text" aria-label="برچسب‌های تسک" placeholder="برچسب‌ها با ویرگول"
+                        class="min-w-0 w-28 rounded border border-zinc-300 bg-transparent px-2 py-1 text-xs dark:border-zinc-700" />
                     <span class="text-[11px] text-zinc-400 flex items-center gap-1">
                         <Calendar class="w-3 h-3" />
                         موعد:
@@ -124,7 +126,7 @@ const handleKeydown = (e: KeyboardEvent) => {
                         type="button"
                         @click="setDateShortcut('today')"
                         class="px-2 py-0.5 rounded-lg text-[11px] transition-colors"
-                        :class="dueDate === formatLocalDate() ? 'bg-brand-500 text-white' : 'hover:bg-zinc-200 dark:hover:bg-zinc-700'"
+                        :class="dueDate === offsetDate(0) ? 'bg-brand-500 text-white' : 'hover:bg-zinc-200 dark:hover:bg-zinc-700'"
                     >
                         امروز
                     </button>
@@ -144,6 +146,8 @@ const handleKeydown = (e: KeyboardEvent) => {
                         اینباکس
                     </button>
                 </div>
+
+                <CalendarField v-model="dueDate" label="تاریخ دلخواه" class="basis-full sm:max-w-72" />
 
                 <!-- Priority Shortcuts -->
                 <div class="flex items-center gap-1.5">

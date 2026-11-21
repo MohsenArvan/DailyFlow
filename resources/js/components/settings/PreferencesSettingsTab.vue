@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import type { UserPreferences } from '@/types/auth';
+import { wallpapers } from '@/wallpapers';
+import type { UserPreferences, Wallpaper } from '@/types/auth';
 import {
     Palette,
     Calendar,
     Target,
-    Bell,
     CheckCircle,
     AlertCircle,
     Loader2,
@@ -19,9 +19,9 @@ const authStore = useAuthStore();
 
 const theme = ref<'dark' | 'light' | 'system'>(authStore.userPreferences?.theme || 'dark');
 const dateFormat = ref<'jalali' | 'gregorian'>(authStore.userPreferences?.date_format || 'jalali');
-const startOfWeek = ref<'saturday' | 'monday'>(authStore.userPreferences?.start_of_week || 'saturday');
+const startOfWeek = ref(authStore.userPreferences?.start_of_week ?? 6);
+const wallpaper = ref<Wallpaper>(authStore.userPreferences?.wallpaper ?? 'lake');
 const dailyGoal = ref<number>(authStore.userPreferences?.daily_goal || 5);
-const emailNotifications = ref<boolean>(authStore.userPreferences?.email_notifications ?? true);
 
 const isLoading = ref(false);
 const successMessage = ref('');
@@ -33,9 +33,9 @@ watch(
         if (prefs) {
             theme.value = prefs.theme || 'dark';
             dateFormat.value = prefs.date_format || 'jalali';
-            startOfWeek.value = prefs.start_of_week || 'saturday';
+            startOfWeek.value = prefs.start_of_week ?? 6;
+            wallpaper.value = prefs.wallpaper ?? 'lake';
             dailyGoal.value = prefs.daily_goal ?? 5;
-            emailNotifications.value = prefs.email_notifications ?? true;
         }
     },
     { immediate: true }
@@ -49,8 +49,8 @@ const handleSavePreferences = async () => {
         theme: theme.value,
         date_format: dateFormat.value,
         start_of_week: startOfWeek.value,
+        wallpaper: wallpaper.value,
         daily_goal: Number(dailyGoal.value),
-        email_notifications: emailNotifications.value,
     };
 
     isLoading.value = true;
@@ -131,6 +131,20 @@ const handleSavePreferences = async () => {
                 </div>
             </div>
 
+            <fieldset>
+                <legend class="mb-2 text-sm font-semibold">تصویر پس‌زمینه</legend>
+                <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <label v-for="option in wallpapers" :key="option.id" class="min-w-0 cursor-pointer">
+                        <input v-model="wallpaper" type="radio" name="wallpaper" :value="option.id" class="peer sr-only" />
+                        <span class="block overflow-hidden rounded-xl border bg-surface-cardLight peer-checked:border-brand-600 peer-checked:ring-2 peer-checked:ring-brand-500 peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500 dark:bg-surface-cardDark">
+                            <img v-if="option.preview" :src="option.preview" alt="" loading="lazy" class="aspect-[16/10] w-full object-cover" />
+                            <span v-else class="block aspect-[16/10] bg-surface-subtleLight dark:bg-surface-subtleDark"></span>
+                            <span class="block p-2 text-center text-xs font-semibold">{{ option.label }}</span>
+                        </span>
+                    </label>
+                </div>
+            </fieldset>
+
             <!-- Date Format -->
             <div>
                 <label class="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
@@ -167,18 +181,18 @@ const handleSavePreferences = async () => {
                 <div class="grid grid-cols-2 gap-2.5">
                     <button
                         type="button"
-                        @click="startOfWeek = 'saturday'"
+                        @click="startOfWeek = 6"
                         class="p-2.5 rounded-xl border text-xs font-medium transition-all"
-                        :class="startOfWeek === 'saturday' ? 'border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30' : 'border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-zinc-600 dark:text-zinc-400'"
+                        :class="startOfWeek === 6 ? 'border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30' : 'border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-zinc-600 dark:text-zinc-400'"
                     >
                         شنبه (تقویم رسمی ایران)
                     </button>
 
                     <button
                         type="button"
-                        @click="startOfWeek = 'monday'"
+                        @click="startOfWeek = 1"
                         class="p-2.5 rounded-xl border text-xs font-medium transition-all"
-                        :class="startOfWeek === 'monday' ? 'border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30' : 'border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-zinc-600 dark:text-zinc-400'"
+                        :class="startOfWeek === 1 ? 'border-brand-500 bg-brand-500/10 text-brand-600 dark:text-brand-400 ring-2 ring-brand-500/30' : 'border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-zinc-600 dark:text-zinc-400'"
                     >
                         دوشنبه (استاندارد بین‌المللی)
                     </button>

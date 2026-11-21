@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { watch, onMounted, onUnmounted, computed } from 'vue';
+import { useDialogFocus } from '@/composables/useDialogFocus';
+import { ref, watch, onUnmounted, computed } from 'vue';
 import { X } from 'lucide-vue-next';
 
 interface Props {
@@ -28,7 +29,11 @@ const sizeClasses = computed(() => {
     }
 });
 
+const dialogRoot = ref<HTMLElement>();
+const trapFocus = useDialogFocus(dialogRoot, () => props.isOpen);
+
 const handleKeydown = (e: KeyboardEvent) => {
+    trapFocus(e);
     if (e.key === 'Escape' && props.isOpen) {
         emit('close');
     }
@@ -45,12 +50,8 @@ watch(
     }
 );
 
-onMounted(() => {
-    window.addEventListener('keydown', handleKeydown);
-});
 
 onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeydown);
     document.body.style.overflow = '';
 });
 </script>
@@ -66,8 +67,11 @@ onUnmounted(() => {
 
             <!-- Modal Window -->
             <div
-                class="relative w-full rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark p-6 shadow-modal z-10 animate-in zoom-in-95 fade-in duration-200"
+                class="workspace-panel relative z-10 max-h-[calc(100dvh-2rem)] w-full overflow-y-auto p-5 shadow-modal sm:p-6"
                 :class="sizeClasses"
+                ref="dialogRoot"
+                tabindex="-1"
+                @keydown="handleKeydown" :aria-label="title || 'پنجره'"
                 role="dialog"
                 aria-modal="true"
             >
@@ -86,7 +90,7 @@ onUnmounted(() => {
                         type="button"
                         @click="emit('close')"
                         class="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        title="بستن"
+                        aria-label="بستن"
                     >
                         <X class="w-4 h-4" />
                     </button>

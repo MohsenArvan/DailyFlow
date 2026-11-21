@@ -8,9 +8,16 @@ use Illuminate\Support\Facades\DB;
 
 class CompleteTaskAction
 {
+    public function __construct(private GenerateNextRecurringTaskAction $generate) {}
+
     public function execute(Task $task): Task
     {
         return DB::transaction(function () use ($task) {
+            $task = Task::forUser($task->user_id)->lockForUpdate()->findOrFail($task->id);
+            if ($task->isCompleted()) {
+                return $task->load('subtasks');
+            }
+
             $now = now();
 
             $task->update([
@@ -25,6 +32,8 @@ class CompleteTaskAction
                     'is_completed' => true,
                     'completed_at' => $now,
                 ]);
+
+            $this->generate->execute($task);
 
             return $task->fresh(['subtasks']);
         });

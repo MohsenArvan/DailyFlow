@@ -102,7 +102,7 @@ const handleRegister = async () => {
     <div class="flex-1 flex items-center justify-center p-4 sm:p-6 my-auto font-vazir">
         <div class="w-full max-w-md">
             <!-- Card Container -->
-            <div class="rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight dark:bg-surface-cardDark p-7 sm:p-9 shadow-xl shadow-zinc-950/5">
+            <div class="workspace-hero p-6 shadow-card sm:p-9">
                 <!-- Header -->
                 <div class="text-center mb-7">
                     <div class="w-12 h-12 rounded-2xl bg-brand-500/10 text-brand-600 dark:text-brand-400 mx-auto flex items-center justify-center mb-3">

@@ -44,9 +44,9 @@ const userInitial = computed(() => {
 </script>
 
 <template>
-    <header class="h-16 px-4 sm:px-6 flex items-center justify-between border-b border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight/80 dark:bg-surface-cardDark/80 backdrop-blur-md sticky top-0 z-30 transition-colors font-vazir select-none">
+    <header class="min-h-16 gap-2 px-4 sm:px-7 lg:px-10 flex items-center justify-between border-b border-surface-borderLight dark:border-surface-borderDark bg-surface-cardLight/80 dark:bg-surface-cardDark/80 backdrop-blur-md sticky top-0 z-30 transition-colors font-vazir select-none">
         <!-- Left: Mobile Menu Trigger & Title -->
-        <div class="flex items-center gap-3">
+        <div class="flex min-w-0 items-center gap-2 sm:gap-3">
             <!-- Mobile Menu Toggle Button -->
             <button
                 type="button"
@@ -64,7 +64,7 @@ const userInitial = computed(() => {
         </div>
 
         <!-- Right: Actions & Profile -->
-        <div class="flex items-center gap-2 sm:gap-2.5">
+        <div class="flex shrink-0 items-center gap-1 sm:gap-2.5">
             <!-- Quick Add Task Button -->
             <button
                 type="button"
@@ -84,8 +84,8 @@ const userInitial = computed(() => {
                 title="جست‌وجو (Ctrl+K)"
             >
                 <Search class="w-3.5 h-3.5" />
-                <span class="hidden lg:inline text-zinc-400">جست‌وجو...</span>
-                <kbd class="hidden lg:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-700/60 text-zinc-500 dark:text-zinc-400">⌘K</kbd>
+                <span class="hidden lg:inline text-zinc-600 dark:text-zinc-300">جست‌وجو...</span>
+                <kbd class="hidden lg:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-700/60 text-zinc-700 dark:text-zinc-300">⌘K</kbd>
             </button>
 
             <!-- Theme Toggle -->

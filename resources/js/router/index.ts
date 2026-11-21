@@ -15,6 +15,18 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, title: 'امروز' },
     },
     {
+        path: '/dashboard',
+        name: 'dashboard',
+        component: () => import('@/views/DashboardView.vue'),
+        meta: { requiresAuth: true, title: 'داشبورد' },
+    },
+    {
+        path: '/kanban',
+        name: 'kanban',
+        component: () => import('@/views/KanbanView.vue'),
+        meta: { requiresAuth: true, title: 'کانبان همهٔ تسک‌ها' },
+    },
+    {
         path: '/inbox',
         name: 'inbox',
         component: () => import('@/views/InboxView.vue'),

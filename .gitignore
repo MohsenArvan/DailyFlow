@@ -25,3 +25,8 @@ keys.*.pub
 /.zed
 
 /.playwright-cli
+
+/backups/
+
+/playwright-report/
+/test-results/

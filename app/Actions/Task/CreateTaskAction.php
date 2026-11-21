@@ -6,6 +6,7 @@ use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 class CreateTaskAction
@@ -22,12 +23,15 @@ class CreateTaskAction
                 'user_id' => $user->id,
                 'project_id' => $data['project_id'] ?? null,
                 'parent_id' => $data['parent_id'] ?? null,
+                'tags' => array_values($data['tags'] ?? []),
                 'title' => trim($data['title']),
                 'description' => $data['description'] ?? null,
                 'status' => TaskStatus::PENDING,
                 'priority' => isset($data['priority']) ? TaskPriority::from($data['priority']) : TaskPriority::MEDIUM,
                 'due_date' => $data['due_date'] ?? null,
                 'due_time' => $data['due_time'] ?? null,
+                'recurrence_rule' => $data['recurrence_rule'] ?? null,
+                'reminder_at' => isset($data['reminder_at']) ? CarbonImmutable::parse($data['reminder_at'])->utc() : null,
                 'order' => $maxOrder + 1,
             ]);
         });

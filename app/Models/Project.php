@@ -62,7 +62,7 @@ class Project extends Model
 
     public function pendingTasks(): HasMany
     {
-        return $this->tasks()->pending();
+        return $this->tasks()->active();
     }
 
     public function completedTasks(): HasMany

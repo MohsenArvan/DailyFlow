@@ -23,6 +23,7 @@ class Task extends Model
         'project_id',
         'parent_id',
         'title',
+        'tags',
         'description',
         'status',
         'priority',
@@ -37,6 +38,7 @@ class Task extends Model
     protected function casts(): array
     {
         return [
+            'tags' => 'array',
             'status' => TaskStatus::class,
             'priority' => TaskPriority::class,
             'due_date' => 'immutable_date:Y-m-d',
@@ -99,6 +101,11 @@ class Task extends Model
         return $query->where('status', TaskStatus::PENDING->value);
     }
 
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereIn('status', [TaskStatus::PENDING->value, TaskStatus::IN_PROGRESS->value]);
+    }
+
     public function scopeCompleted(Builder $query): Builder
     {
         return $query->where('status', TaskStatus::COMPLETED->value);
@@ -106,12 +113,12 @@ class Task extends Model
 
     public function scopeToday(Builder $query, string $userTodayDate): Builder
     {
-        return $query->pending()->where('due_date', $userTodayDate);
+        return $query->active()->where('due_date', $userTodayDate);
     }
 
     public function scopeOverdue(Builder $query, string $userTodayDate): Builder
     {
-        return $query->pending()->where('due_date', '<', $userTodayDate);
+        return $query->active()->where('due_date', '<', $userTodayDate);
     }
 
     public function scopeUpcoming(Builder $query, string $userTodayDate, int $days = 7): Builder
@@ -119,14 +126,14 @@ class Task extends Model
         $startDate = $userTodayDate;
         $endDate = now()->parse($userTodayDate)->addDays($days)->format('Y-m-d');
 
-        return $query->pending()
+        return $query->active()
             ->where('due_date', '>', $startDate)
             ->where('due_date', '<=', $endDate);
     }
 
     public function scopeInbox(Builder $query): Builder
     {
-        return $query->pending()->whereNull('due_date');
+        return $query->active()->whereNull('due_date');
     }
 
     // Helpers

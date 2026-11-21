@@ -6,6 +6,7 @@ use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Arr;
 
 class TaskResource extends JsonResource
 {
@@ -38,6 +39,7 @@ class TaskResource extends JsonResource
             'id' => $this->id,
             'uuid' => $this->uuid,
             'project_id' => $this->project_id,
+            'tags' => $this->tags ?? [],
             'title' => $this->title,
             'description' => $this->description,
             'status' => $this->status->value,
@@ -48,6 +50,8 @@ class TaskResource extends JsonResource
             'is_today' => $this->isToday($userToday),
             'is_overdue' => $this->isOverdue($userToday),
             'order' => $this->order,
+            'recurrence_rule' => $this->recurrence_rule ? Arr::except($this->recurrence_rule, ['anchor_day']) : null,
+            'reminder_at' => $this->reminder_at?->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'subtasks_count' => $subtasksCount,
             'subtasks_completed_count' => $subtasksCompletedCount,

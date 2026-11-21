@@ -16,7 +16,7 @@ class ProjectResource extends JsonResource
     {
         $total = $this->tasks_count ?? $this->tasks()->count();
         $completed = $this->completed_tasks_count ?? $this->tasks()->completed()->count();
-        $pending = $this->pending_tasks_count ?? $this->tasks()->pending()->count();
+        $pending = $this->pending_tasks_count ?? $this->tasks()->active()->count();
         $progress = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
 
         return [

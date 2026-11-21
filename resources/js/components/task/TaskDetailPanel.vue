@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { useDialogFocus } from '@/composables/useDialogFocus';
+import { ref, watch, onMounted } from 'vue';
 import { useTaskStore } from '@/stores/tasks';
 import { useProjectStore } from '@/stores/projects';
-import type { TaskPriority } from '@/types/task';
+import type { TaskPriority, TaskStatus } from '@/types/task';
+import TaskScheduleFields from './TaskScheduleFields.vue';
+import CalendarField from '@/components/ui/CalendarField.vue';
 import BaseCheckbox from '@/components/ui/BaseCheckbox.vue';
 import {
     X,
-    Calendar,
+    CircleDot,
+    ListChecks,
     Flag,
     Folder,
     Trash2,
@@ -19,10 +23,25 @@ const taskStore = useTaskStore();
 const projectStore = useProjectStore();
 
 const newSubtaskTitle = ref('');
-const isEditingTitle = ref(false);
+const statusSaving = ref(false);
+watch(() => taskStore.currentTask?.uuid, () => { newSubtaskTitle.value = ''; });
+
+async function handleStatusChange(event: Event) {
+    const field = event.target as HTMLSelectElement;
+    const task = taskStore.currentTask;
+    if (!task) return;
+    const status = field.value as TaskStatus;
+    field.value = task.status;
+    if (statusSaving.value || status === task.status) return;
+    statusSaving.value = true;
+    try {
+        await taskStore.updateTask(task.uuid, { status });
+    } finally {
+        statusSaving.value = false;
+    }
+}
 
 const handleTitleBlur = (e: Event) => {
-    isEditingTitle.value = false;
     const target = e.target as HTMLInputElement;
     if (taskStore.currentTask && target.value.trim() && target.value.trim() !== taskStore.currentTask.title) {
         taskStore.updateTask(taskStore.currentTask.uuid, { title: target.value.trim() });
@@ -31,7 +50,7 @@ const handleTitleBlur = (e: Event) => {
 
 const handleDescriptionBlur = (e: Event) => {
     const target = e.target as HTMLTextAreaElement;
-    if (taskStore.currentTask && target.value !== taskStore.currentTask.description) {
+    if (taskStore.currentTask && target.value !== (taskStore.currentTask.description ?? '')) {
         taskStore.updateTask(taskStore.currentTask.uuid, { description: target.value });
     }
 };
@@ -43,10 +62,9 @@ const handlePriorityChange = (e: Event) => {
     }
 };
 
-const handleDueDateChange = (e: Event) => {
-    const target = e.target as HTMLInputElement;
+const handleDueDateChange = (date: string | null) => {
     if (taskStore.currentTask) {
-        taskStore.updateTask(taskStore.currentTask.uuid, { due_date: target.value || null });
+        taskStore.updateTask(taskStore.currentTask.uuid, { due_date: date });
     }
 };
 
@@ -60,8 +78,7 @@ const handleProjectChange = (e: Event) => {
 
 const handleAddSubtask = async () => {
     if (!newSubtaskTitle.value.trim() || !taskStore.currentTask) return;
-    await taskStore.addSubtask(taskStore.currentTask.uuid, newSubtaskTitle.value.trim());
-    newSubtaskTitle.value = '';
+    if (await taskStore.addSubtask(taskStore.currentTask.uuid, newSubtaskTitle.value.trim())) newSubtaskTitle.value = '';
 };
 
 const handleToggleSubtask = async (subtaskId: number) => {
@@ -88,38 +105,42 @@ const handleDeleteTask = async () => {
     }
 };
 
+const dialogRoot = ref<HTMLElement>();
+const trapFocus = useDialogFocus(dialogRoot, () => taskStore.isDetailsOpen);
+
 const handleKeydown = (e: KeyboardEvent) => {
+    trapFocus(e);
     if (e.key === 'Escape' && taskStore.isDetailsOpen) {
+        e.preventDefault();
         taskStore.closeDetails();
     }
 };
 
 onMounted(() => {
-    window.addEventListener('keydown', handleKeydown);
     if (!projectStore.projects.length) {
         projectStore.fetchProjects();
     }
 });
 
-onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeydown);
-});
 </script>
 
 <template>
     <Teleport to="body">
-        <div v-if="taskStore.isDetailsOpen && taskStore.currentTask" class="fixed inset-0 z-50 font-vazir text-right">
+        <div v-if="taskStore.isDetailsOpen && taskStore.currentTask" class="fixed inset-0 z-50 grid place-items-center p-3 font-vazir text-right sm:p-6">
             <!-- Backdrop -->
             <div
-                class="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs transition-opacity"
+                class="absolute inset-0 bg-slate-950/65 backdrop-blur-sm"
                 @click="taskStore.closeDetails"
             ></div>
 
-            <!-- Slide-over Drawer -->
-            <div class="fixed inset-y-0 left-0 max-w-full w-full sm:w-[480px] bg-surface-cardLight dark:bg-surface-cardDark shadow-modal border-r border-surface-borderLight dark:border-surface-borderDark flex flex-col z-10 animate-in slide-in-from-left duration-200">
+            <!-- Task details dialog -->
+            <div ref="dialogRoot" role="dialog" aria-modal="true" tabindex="-1" @keydown="handleKeydown" aria-label="جزئیات تسک" class="workspace-panel relative z-10 flex max-h-[calc(100dvh-1.5rem)] min-w-0 w-full max-w-[43rem] flex-col overflow-hidden shadow-modal sm:max-h-[calc(100dvh-3rem)]">
                 <!-- Header Actions -->
-                <div class="h-16 px-6 border-b border-surface-borderLight dark:border-surface-borderDark flex items-center justify-between shrink-0">
-                    <div class="flex items-center gap-2">
+                <div class="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-brand-50/70 px-4 py-3 dark:bg-brand-950/45 sm:px-6">
+                    <h2 class="flex items-center gap-2 font-bold">
+                        <ListChecks aria-hidden="true" class="size-5 text-brand-700 dark:text-brand-300" /> جزئیات تسک
+                    </h2>
+                    <div class="flex items-center gap-1.5">
                         <button
                             type="button"
                             @click="handleToggleComplete"
@@ -127,21 +148,18 @@ onUnmounted(() => {
                             :class="[
                                 taskStore.currentTask.status === 'completed'
                                     ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                                    : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+                                    : 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-500/20'
                             ]"
                         >
                             <RotateCcw v-if="taskStore.currentTask.status === 'completed'" class="w-3.5 h-3.5" />
                             <CheckCircle2 v-else class="w-3.5 h-3.5" />
                             <span>{{ taskStore.currentTask.status === 'completed' ? 'بازگشایی تسک' : 'تکمیل تسک' }}</span>
                         </button>
-                    </div>
-
-                    <div class="flex items-center gap-1.5">
                         <button
                             type="button"
                             @click="handleDeleteTask"
                             class="p-2 rounded-xl text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors"
-                            title="حذف تسک"
+                            title="حذف تسک" aria-label="حذف تسک"
                         >
                             <Trash2 class="w-4 h-4" />
                         </button>
@@ -149,7 +167,7 @@ onUnmounted(() => {
                             type="button"
                             @click="taskStore.closeDetails"
                             class="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                            title="بستن (Esc)"
+                            title="بستن (Esc)" aria-label="بستن جزئیات تسک"
                         >
                             <X class="w-4 h-4" />
                         </button>
@@ -157,30 +175,43 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Main Scrollable Body -->
-                <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                <div class="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
                     <!-- Title Input -->
                     <div>
+                        <label for="task-editor-title" class="task-field-label">عنوان تسک</label>
                         <input
+                            id="task-editor-title"
+                            aria-label="عنوان تسک"
                             :value="taskStore.currentTask.title"
                             @blur="handleTitleBlur"
                             @keyup.enter="($event.target as HTMLInputElement).blur()"
                             type="text"
-                            class="w-full text-base sm:text-lg font-bold bg-transparent text-zinc-900 dark:text-zinc-50 border-b border-transparent focus:border-brand-500 focus:outline-none transition-colors py-1"
+                            class="task-field !text-base font-bold"
                         />
                     </div>
 
                     <!-- Meta Properties (Priority, Due Date, Project) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-surface-subtleLight dark:bg-surface-subtleDark border border-surface-borderLight dark:border-surface-borderDark text-xs">
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                            <label for="task-editor-status" class="task-field-label"><CircleDot class="size-4" aria-hidden="true" /> وضعیت تسک</label>
+                            <select id="task-editor-status" class="task-field" :value="taskStore.currentTask.status"
+                                :aria-busy="statusSaving" @change="handleStatusChange">
+                                <option value="pending">در انتظار</option>
+                                <option value="in_progress">در حال انجام</option>
+                                <option value="completed">انجام‌شده</option>
+                            </select>
+                        </div>
                         <!-- Priority Selector -->
                         <div>
-                            <label class="block text-[11px] text-zinc-400 mb-1 flex items-center gap-1">
+                            <label for="task-editor-priority" class="task-field-label">
                                 <Flag class="w-3 h-3" />
                                 اولویت
                             </label>
                             <select
+                                id="task-editor-priority"
                                 :value="taskStore.currentTask.priority"
                                 @change="handlePriorityChange"
-                                class="w-full bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark rounded-xl px-2.5 py-1.5 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs"
+                                class="task-field"
                             >
                                 <option value="none">بدون اولویت</option>
                                 <option value="low">پایین</option>
@@ -190,30 +221,20 @@ onUnmounted(() => {
                             </select>
                         </div>
 
-                        <!-- Due Date Selector -->
-                        <div>
-                            <label class="block text-[11px] text-zinc-400 mb-1 flex items-center gap-1">
-                                <Calendar class="w-3 h-3" />
-                                موعد انجام
-                            </label>
-                            <input
-                                type="date"
-                                :value="taskStore.currentTask.due_date || ''"
-                                @change="handleDueDateChange"
-                                class="w-full bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark rounded-xl px-2.5 py-1.5 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs"
-                            />
-                        </div>
+                        <CalendarField label="موعد انجام" :model-value="taskStore.currentTask.due_date ?? null"
+                            @update:model-value="handleDueDateChange" />
 
                         <!-- Project Selector -->
                         <div>
-                            <label class="block text-[11px] text-zinc-400 mb-1 flex items-center gap-1">
+                            <label for="task-editor-project" class="task-field-label">
                                 <Folder class="w-3 h-3" />
                                 پروژه
                             </label>
                             <select
+                                id="task-editor-project"
                                 :value="taskStore.currentTask.project_id || ''"
                                 @change="handleProjectChange"
-                                class="w-full bg-surface-cardLight dark:bg-surface-cardDark border border-surface-borderLight dark:border-surface-borderDark rounded-xl px-2.5 py-1.5 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-brand-500 text-xs truncate"
+                                class="task-field truncate"
                             >
                                 <option value="">اینباکس (بدون پروژه)</option>
                                 <option
@@ -227,17 +248,20 @@ onUnmounted(() => {
                         </div>
                     </div>
 
+                    <TaskScheduleFields :key="taskStore.currentTask.uuid" :task="taskStore.currentTask" />
+
                     <!-- Description Textarea -->
                     <div>
-                        <label class="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1.5">
+                        <label for="task-editor-description" class="task-field-label">
                             توضیحات و یادداشت‌ها
                         </label>
                         <textarea
+                            id="task-editor-description"
                             :value="taskStore.currentTask.description || ''"
                             @blur="handleDescriptionBlur"
                             rows="4"
                             placeholder="یادداشت‌های بیشتر درباره این تسک بنویسید..."
-                            class="w-full p-3.5 rounded-2xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors resize-y leading-relaxed"
+                            class="task-field resize-y leading-relaxed"
                         ></textarea>
                     </div>
 
@@ -247,7 +271,7 @@ onUnmounted(() => {
                             <h4 class="text-xs font-bold text-zinc-700 dark:text-zinc-300">
                                 چک‌لیست زیرتسک‌ها
                             </h4>
-                            <span v-if="taskStore.currentTask.subtasks?.length" class="text-[11px] font-medium text-zinc-400">
+                            <span v-if="taskStore.currentTask.subtasks?.length" class="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
                                 {{ taskStore.currentTask.subtasks_completed_count }} از {{ taskStore.currentTask.subtasks_count }}
                             </span>
                         </div>
@@ -261,12 +285,13 @@ onUnmounted(() => {
                             >
                                 <div class="flex items-center gap-2.5 flex-1 min-w-0">
                                     <BaseCheckbox
+                                        :aria-label="subtask.title"
                                         :model-value="subtask.is_completed"
                                         @change="() => handleToggleSubtask(subtask.id)"
                                     />
                                     <span
                                         class="truncate font-medium transition-colors cursor-pointer"
-                                        :class="subtask.is_completed ? 'text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-200'"
+                                        :class="subtask.is_completed ? 'text-zinc-600 dark:text-zinc-400 line-through' : 'text-zinc-800 dark:text-zinc-200'"
                                         @click="handleToggleSubtask(subtask.id)"
                                     >
                                         {{ subtask.title }}
@@ -276,8 +301,8 @@ onUnmounted(() => {
                                 <button
                                     type="button"
                                     @click="handleDeleteSubtask(subtask.id)"
-                                    class="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-rose-500 transition-opacity"
-                                    title="حذف زیرتسک"
+                                    class="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 p-1 text-zinc-400 hover:text-rose-500 transition-opacity"
+                                    title="حذف زیرتسک" aria-label="حذف زیرتسک"
                                 >
                                     <X class="w-3.5 h-3.5" />
                                 </button>
@@ -287,11 +312,16 @@ onUnmounted(() => {
                         <!-- Add Subtask Input -->
                         <form @submit.prevent="handleAddSubtask" class="flex items-center gap-2">
                             <input
+                                aria-label="افزودن زیرتسک"
                                 v-model="newSubtaskTitle"
                                 type="text"
                                 placeholder="+ افزودن مورد جدید به چک‌لیست (Enter)..."
-                                class="w-full px-3 py-2 rounded-xl border border-surface-borderLight dark:border-surface-borderDark bg-surface-subtleLight dark:bg-surface-subtleDark text-xs text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                class="task-field min-w-0"
                             />
+                            <button type="submit" :disabled="!newSubtaskTitle.trim()"
+                                class="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-brand-700 px-3 text-sm font-semibold text-white disabled:opacity-50">
+                                <Plus aria-hidden="true" class="size-4" /> افزودن
+                            </button>
                         </form>
                     </div>
                 </div>

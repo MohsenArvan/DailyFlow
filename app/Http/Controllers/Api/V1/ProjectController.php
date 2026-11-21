@@ -33,7 +33,7 @@ class ProjectController extends Controller
                     $q->completed();
                 },
                 'tasks as pending_tasks_count' => function ($q) {
-                    $q->pending();
+                    $q->active();
                 },
             ])
             ->ordered();
@@ -77,7 +77,7 @@ class ProjectController extends Controller
                 $q->completed();
             },
             'tasks as pending_tasks_count' => function ($q) {
-                $q->pending();
+                $q->active();
             },
         ]);
 
