@@ -147,7 +147,7 @@ onUnmounted(() => {
             </main>
         </div>
 
-        <!-- Task Details Slide-over Panel -->
+        <!-- Task Details Dialog -->
         <TaskDetailPanel />
 
         <!-- Project Create/Edit Modal -->

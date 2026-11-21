@@ -118,7 +118,16 @@ test('kanban drag and mobile status selection persist across reloads', async ({ 
     const pending = page.getByRole('region', { name: 'در انتظار', exact: true });
     const progress = page.getByRole('region', { name: 'در حال انجام', exact: true });
     const completed = page.getByRole('region', { name: 'انجام‌شده', exact: true });
-    await pending.getByRole('listitem').filter({ hasText: 'Board task' }).getByTitle('کشیدن تسک').dragTo(progress);
+    const handle = pending.getByRole('listitem').filter({ hasText: 'Board task' }).getByTitle('کشیدن تسک');
+    await handle.hover();
+    await page.mouse.down();
+    const dropZone = await progress.boundingBox();
+    expect(dropZone).not.toBeNull();
+    const x = dropZone!.x + dropZone!.width / 2;
+    const y = dropZone!.y + 32;
+    await page.mouse.move(x, y, { steps: 12 });
+    await page.mouse.move(x + 2, y + 2);
+    await page.mouse.up();
     await expect(progress.getByRole('button', { name: 'Board task' })).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
@@ -166,4 +175,28 @@ test('global kanban includes project and inbox tasks and saves status changes', 
     await expect(progress.getByRole('button', { name: 'Assigned board task' })).toBeVisible();
     await page.reload();
     await expect(progress.getByRole('button', { name: 'Assigned board task' })).toBeVisible();
+});
+
+test('task details open centrally and save the in-progress status', async ({ page }) => {
+    await register(page);
+    await addTask(page, 'Task details status');
+    await page.getByRole('button', { name: 'Task details status', exact: true }).click();
+    const details = page.getByRole('dialog', { name: 'جزئیات تسک' });
+    const bounds = await details.boundingBox();
+    const viewport = page.viewportSize();
+    expect(bounds).not.toBeNull();
+    expect(Math.abs(bounds!.x + bounds!.width / 2 - viewport!.width / 2)).toBeLessThan(8);
+    expect(Math.abs(bounds!.y + bounds!.height / 2 - viewport!.height / 2)).toBeLessThan(8);
+    const status = details.getByRole('combobox', { name: 'وضعیت تسک' });
+    await status.focus();
+    await Promise.all([
+        page.waitForResponse(response => response.request().method() === 'PUT' && response.url().includes('/tasks/') && response.ok()),
+        status.selectOption('in_progress'),
+    ]);
+    await expect(status).toHaveValue('in_progress');
+    await expect(status).toBeFocused();
+    await page.keyboard.press('Escape');
+    await page.goto('/kanban');
+    await expect(page.getByRole('region', { name: 'در حال انجام', exact: true })
+        .getByRole('button', { name: 'Task details status' })).toBeVisible();
 });
