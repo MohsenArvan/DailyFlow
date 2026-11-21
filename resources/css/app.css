@@ -8,30 +8,74 @@
     :root {
         --bg-app: #FBFBFA;
         --bg-surface: #FFFFFF;
-        --bg-subtle: #F3F3F1;
-        --border-color: #E9E9E6;
-        --text-primary: #1D1D1F;
-        --text-secondary: #737373;
+        --bg-sidebar: #F7F7F5;
+        --bg-subtle: #F1F1EF;
+        --border-color: #E5E5E2;
+        --text-primary: #1C1917;
+        --text-secondary: #78716C;
+        --text-muted: #A8A29E;
     }
 
     .dark {
         --bg-app: #121214;
         --bg-surface: #18181B;
-        --bg-subtle: #27272A;
-        --border-color: #2E2E33;
-        --text-primary: #F4F4F5;
+        --bg-sidebar: #141416;
+        --bg-subtle: #222226;
+        --border-color: #2A2A30;
+        --text-primary: #FAFAFA;
         --text-secondary: #A1A1AA;
+        --text-muted: #71717A;
+    }
+
+    * {
+        border-color: var(--border-color);
     }
 
     body {
         background-color: var(--bg-app);
         color: var(--text-primary);
-        font-family: 'Inter', 'Vazirmatn', system-ui, -apple-system, sans-serif;
+        font-family: 'Vazirmatn', 'Inter', system-ui, -apple-system, sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
     }
 
-    [dir="rtl"] body {
-        font-family: 'Vazirmatn', 'Inter', system-ui, -apple-system, sans-serif;
+    /* Custom Slim Scrollbars */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(156, 163, 175, 0.35);
+        border-radius: 9999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(156, 163, 175, 0.55);
+    }
+
+    .dark ::-webkit-scrollbar-thumb {
+        background: rgba(113, 113, 122, 0.4);
+    }
+
+    .dark ::-webkit-scrollbar-thumb:hover {
+        background: rgba(113, 113, 122, 0.65);
+    }
+}
+
+@layer utilities {
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
     }
 }

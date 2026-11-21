@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { User, Sliders, Shield } from 'lucide-vue-next';
+import AppLayout from '@/components/layout/AppLayout.vue';
 import ProfileSettingsTab from '@/components/settings/ProfileSettingsTab.vue';
 import PreferencesSettingsTab from '@/components/settings/PreferencesSettingsTab.vue';
 import SecuritySettingsTab from '@/components/settings/SecuritySettingsTab.vue';
@@ -16,11 +17,10 @@ const tabs = [
 </script>
 
 <template>
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8 font-vazir">
-        <!-- Page Title -->
-        <div class="mb-8">
-            <h1 class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">تنظیمات حساب کاربری</h1>
-            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5">مدیریت مشخصات فردی، ظاهر برنامه و امنیت حساب شما</p>
+    <AppLayout>
+        <div class="mb-6">
+            <h2 class="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">تنظیمات حساب کاربری</h2>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">مدیریت مشخصات فردی، ظاهر برنامه و امنیت حساب شما</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -51,5 +51,5 @@ const tabs = [
                 </div>
             </div>
         </div>
-    </div>
+    </AppLayout>
 </template>

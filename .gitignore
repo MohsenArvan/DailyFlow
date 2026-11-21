@@ -23,3 +23,5 @@ keys.*.pub
 /.nova
 /.vscode
 /.zed
+
+/.playwright-cli
