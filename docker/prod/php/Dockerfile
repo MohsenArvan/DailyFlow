@@ -54,3 +54,19 @@ RUN rm -f public/hot bootstrap/cache/*.php \
 USER www-data
 ENTRYPOINT ["dailyflow"]
 CMD ["php-fpm83", "-F"]
+
+FROM app AS coolify
+USER root
+RUN apk add --no-cache nginx su-exec supervisor \
+    && sed -i 's/^listen = 9000$/listen = 127.0.0.1:9000/' /etc/php83/php-fpm.conf
+COPY docker/prod/nginx/default.conf /etc/nginx/dailyflow-http.conf
+RUN sed -i -e 's/listen 80;/listen 8080;/' -e 's/fastcgi_pass app:9000;/fastcgi_pass 127.0.0.1:9000;/' \
+    /etc/nginx/dailyflow-http.conf
+COPY docker/prod/coolify/nginx.conf /etc/nginx/dailyflow.conf
+COPY docker/prod/coolify/supervisord.conf /etc/supervisord-dailyflow.conf
+COPY --chmod=755 docker/prod/coolify/entrypoint.sh /usr/local/bin/dailyflow-coolify
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \
+    CMD wget -q -O /dev/null http://127.0.0.1:8080/up || exit 1
+ENTRYPOINT ["dailyflow-coolify"]
+CMD ["supervisord", "-c", "/etc/supervisord-dailyflow.conf"]
