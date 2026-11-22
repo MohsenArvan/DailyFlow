@@ -16,13 +16,13 @@ The migration service runs and exits before the web, queue, and scheduler servic
 
 ## Deploy with Coolify
 
-Configure the Git-based application to deploy `main` using the Docker Compose build pack. Set the base directory to `/` and the Docker Compose location to `/compose.prod.yaml`. Use the standard Compose deployment mode so Coolify configures domain routing.
+Configure the Git-based application with the **Dockerfile** build pack, base directory `/`, Dockerfile location `/docker/prod/php/Dockerfile`, and build stage `coolify`. Set **Ports Exposes** to `8080` and attach the public HTTPS domain to the application. In Healthcheck, use HTTP with path `/up`.
 
-Assign the public HTTPS domain to the `web` service on internal port `80`. In Environment Variables, set `APP_URL` to the full HTTPS URL and `SANCTUM_STATEFUL_DOMAINS` to its hostname. Set `APP_KEY`, `DB_PASSWORD`, and `REDIS_PASSWORD` using the steps above for a fresh installation. Preserve the existing values when redeploying an existing installation.
+Set `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` to the full HTTPS URL, `SANCTUM_STATEFUL_DOMAINS` to its hostname, `SESSION_SECURE_COOKIE=true`, and `LOG_CHANNEL=stderr`. Set `APP_KEY` using the steps above for a fresh installation. Preserve it when redeploying an existing installation.
 
-If the build log shows `FROM logistino-app:docker-check`, check the build pack and Compose location. That base image is referenced by the local development Dockerfile. The production Compose file builds the `app` and `web` targets from `docker/prod/php/Dockerfile`.
+Connect PostgreSQL and Redis as separate services reachable from the application. Set `DB_CONNECTION=pgsql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD`, then set `REDIS_HOST`, `REDIS_PORT`, and `REDIS_PASSWORD` to match the Redis service. Set `CACHE_STORE=redis`, `SESSION_DRIVER=redis`, and `QUEUE_CONNECTION=redis`. Run a worker with `php artisan queue:work redis --sleep=3 --tries=3 --timeout=90` and schedule `php artisan schedule:run` every minute if you use background jobs and scheduled tasks.
 
-After deployment, verify the public `/up` endpoint and confirm that the `migrate` service exited successfully.
+Set `DAILYFLOW_MIGRATE=1` for a single application instance to apply migrations at startup. For multiple replicas, run `php artisan migrate --force` separately before rolling out the new image. After deploying, verify the public `/up` endpoint. If the build log shows `FROM logistino-app:docker-check`, check the Dockerfile location in Coolify.
 
 ## Upgrade an existing Compose deployment
 
