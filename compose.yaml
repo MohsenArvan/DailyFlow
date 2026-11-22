@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      target: development
     restart: unless-stopped
     working_dir: /var/www/html
     environment:
@@ -22,7 +23,7 @@ services:
       - REDIS_PORT=6379
     volumes:
       - .:/var/www/html
-      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/zzz-dailyflow-dev.ini:ro
+      - ./docker/php/php.ini:/etc/php83/conf.d/zzz-dailyflow-dev.ini:ro
     networks:
       - dailyflow-network
     depends_on:
@@ -95,6 +96,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      target: development
     restart: unless-stopped
     working_dir: /var/www/html
     environment:
@@ -127,6 +129,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      target: development
     restart: unless-stopped
     working_dir: /var/www/html
     environment:

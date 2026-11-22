@@ -1,7 +1,7 @@
 x-runtime: &runtime
   build:
     context: .
-    dockerfile: docker/prod/php/Dockerfile
+    dockerfile: docker/php/Dockerfile
     target: app
   image: dailyflow-app:production
   restart: unless-stopped
@@ -48,7 +48,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: docker/prod/php/Dockerfile
+      dockerfile: docker/php/Dockerfile
       target: web
     restart: unless-stopped
     ports:
