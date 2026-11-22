@@ -18,6 +18,14 @@ RUN if ! id www-data >/dev/null 2>&1; then \
     adduser -S -D -H -G www-data www-data; \
     fi
 
+FROM php AS development
+COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
+COPY docker/prod/php/php-fpm.conf /etc/php83/php-fpm.conf
+COPY --chmod=755 docker/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+WORKDIR /var/www/html
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php-fpm83", "-F"]
+
 FROM php AS dependencies
 COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
 WORKDIR /build
