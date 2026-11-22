@@ -14,6 +14,16 @@ Use a Linux host with Docker Engine and Compose v2, at least 2 CPU cores, 3 GB R
 
 The migration service runs and exits before the web, queue, and scheduler services start. After changing application or environment configuration, rerun the Compose start command. For an HTTP-only local smoke test, set the URL to `http://localhost:8080`, the Sanctum domain to `localhost:8080`, and `SESSION_SECURE_COOKIE=false`.
 
+## Deploy with Coolify
+
+Configure the Git-based application to deploy `main` using the Docker Compose build pack. Set the base directory to `/` and the Docker Compose location to `/compose.prod.yaml`. Use the standard Compose deployment mode so Coolify configures domain routing.
+
+Assign the public HTTPS domain to the `web` service on internal port `80`. In Environment Variables, set `APP_URL` to the full HTTPS URL and `SANCTUM_STATEFUL_DOMAINS` to its hostname. Set `APP_KEY`, `DB_PASSWORD`, and `REDIS_PASSWORD` using the steps above for a fresh installation. Preserve the existing values when redeploying an existing installation.
+
+If the build log shows `FROM logistino-app:docker-check`, check the build pack and Compose location. That base image is referenced by the local development Dockerfile. The production Compose file builds the `app` and `web` targets from `docker/prod/php/Dockerfile`.
+
+After deployment, verify the public `/up` endpoint and confirm that the `migrate` service exited successfully.
+
 ## Upgrade an existing Compose deployment
 
 The standalone production Compose file uses its own PostgreSQL and Redis volumes. Back up the old PostgreSQL service before switching. Use a distinct Compose project name for the new deployment during migration, restore the backup into its database, then run production migrations again before switching traffic.
