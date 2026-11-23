@@ -2,6 +2,7 @@
 
 namespace App\Actions\User;
 
+use App\Models\ProjectNote;
 use App\Models\User;
 use Generator;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -40,6 +41,18 @@ class ExportUserDataAction
     {
         foreach ($user->projects()->reorder()->lazyById() as $project) {
             yield ['project', $project->id, null, $project->name, $project->toArray()];
+        }
+
+        $notes = ProjectNote::query()->whereIn('project_id', $user->projects()->reorder()->select('projects.id'))
+            ->with('project:id,uuid');
+
+        foreach ($notes->lazyById() as $note) {
+            if ($note->project) {
+                yield ['project_note', $note->id, $note->project_id, $note->title, [
+                    ...$note->attributesToArray(),
+                    'project_uuid' => $note->project->uuid,
+                ]];
+            }
         }
 
         foreach ($user->tasks()->reorder()->with('subtasks')->lazyById() as $task) {
