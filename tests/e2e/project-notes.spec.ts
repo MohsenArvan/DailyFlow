@@ -126,3 +126,20 @@ test('notes stay accessible through the keyboard when project tasks fail to load
     await expect(notes).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('button', { name: 'یادداشت جدید' })).toBeVisible();
 });
+
+test('a note’s review status stays selected after reloading the project', async ({ page }) => {
+    await openProject(page);
+    await page.getByRole('tab', { name: 'یادداشت‌ها' }).click();
+    await createNote(page, 'بررسی صفحهٔ خرید', 'بررسی مرورگرها');
+    const status = page.getByRole('combobox', { name: 'وضعیت بررسی بررسی صفحهٔ خرید' });
+    await expect(status).toHaveValue('unreviewed');
+    for (const value of ['in_review', 'reviewed']) {
+        await Promise.all([
+            page.waitForResponse(response => response.request().method() === 'PATCH' && response.ok()),
+            status.selectOption(value),
+        ]);
+        await expect(status).toHaveValue(value);
+        await page.reload();
+        await expect(status).toHaveValue(value);
+    }
+});

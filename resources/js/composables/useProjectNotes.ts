@@ -49,7 +49,10 @@ export function useProjectNotes(projectUuid: MaybeRefOrGetter<string>) {
     async function save(input: ProjectNoteChanges, noteUuid?: string) {
         const uuid = toValue(projectUuid);
         if (noteUuid) {
-            await updateProjectNote(uuid, noteUuid, input);
+            const updated = await updateProjectNote(uuid, noteUuid, input);
+            if (!disposed && uuid === toValue(projectUuid)) {
+                notes.value = notes.value.map(note => note.uuid === noteUuid ? updated : note);
+            }
         } else {
             await createProjectNote(uuid, input as ProjectNoteDraft);
         }
