@@ -116,3 +116,22 @@ test('a previously resolved project cannot get new notes after deletion', functi
         ->toThrow(ModelNotFoundException::class);
     $this->assertDatabaseCount('project_notes', 0);
 });
+
+test('new and existing notes default to unreviewed and the owner can change the review status', function () {
+    $this->actingAs($this->owner, 'sanctum');
+    $note = ProjectNote::factory()->for($this->project)->create();
+    $url = $this->url.'/'.$note->uuid;
+
+    $this->getJson($this->url)->assertOk()->assertJsonPath('data.0.review_status', 'unreviewed');
+    $this->postJson($this->url, ['title' => 'یادداشت تازه', 'body' => 'متن'])
+        ->assertCreated()->assertJsonPath('data.review_status', 'unreviewed');
+
+    foreach (['in_review', 'reviewed', 'unreviewed'] as $reviewStatus) {
+        $this->patchJson($url, ['review_status' => $reviewStatus])
+            ->assertOk()->assertJsonPath('data.review_status', $reviewStatus);
+        $this->assertDatabaseHas('project_notes', ['uuid' => $note->uuid, 'review_status' => $reviewStatus]);
+    }
+
+    $this->patchJson($url, ['review_status' => 'unknown'])
+        ->assertUnprocessable()->assertJsonValidationErrors('review_status');
+});

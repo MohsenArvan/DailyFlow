@@ -3,7 +3,7 @@ import { computed, shallowRef } from 'vue';
 import { MoreHorizontal, NotebookPen, Pin, Plus } from 'lucide-vue-next';
 import { useProjectNotes } from '@/composables/useProjectNotes';
 import { useAuthStore } from '@/stores/auth';
-import type { ProjectNote, ProjectNoteDraft } from '@/types/projectNote';
+import type { ProjectNote, ProjectNoteDraft, ProjectNoteReviewStatus } from '@/types/projectNote';
 import BaseButton from '@/components/ui/BaseButton.vue';
 import BaseEmptyState from '@/components/ui/BaseEmptyState.vue';
 import BaseModal from '@/components/ui/BaseModal.vue';
@@ -18,6 +18,11 @@ const reading = shallowRef<ProjectNote>();
 const deleting = shallowRef<ProjectNote>();
 const pending = shallowRef(false);
 const actionError = shallowRef('');
+const reviewStatuses = {
+    unreviewed: 'بررسی نشده',
+    in_review: 'در حال بررسی',
+    reviewed: 'بررسی انجام شد',
+} satisfies Record<ProjectNoteReviewStatus, string>;
 const dateFormatter = computed(() => new Intl.DateTimeFormat('fa-IR', {
     dateStyle: 'medium',
     calendar: auth.user?.preferences.date_format === 'gregorian' ? 'gregory' : 'persian',
@@ -48,6 +53,23 @@ async function togglePin(note: ProjectNote, event: Event) {
         await save({ is_pinned: !note.pinned_at }, note.uuid);
     } catch {
         actionError.value = 'تغییر وضعیت سنجاق ممکن نشد.';
+    } finally {
+        pending.value = false;
+    }
+}
+
+async function changeReviewStatus(note: ProjectNote, event: Event) {
+    const select = event.currentTarget as HTMLSelectElement;
+    const reviewStatus = select.value as ProjectNoteReviewStatus;
+    if (pending.value || reviewStatus === note.review_status) return;
+
+    pending.value = true;
+    actionError.value = '';
+    try {
+        await save({ review_status: reviewStatus }, note.uuid);
+    } catch {
+        select.value = note.review_status;
+        actionError.value = 'تغییر وضعیت بررسی ممکن نشد. دوباره تلاش کنید.';
     } finally {
         pending.value = false;
     }
@@ -125,9 +147,23 @@ function closeDeletion() {
                     </h3>
                 </div>
                 <p dir="auto" class="line-clamp-2 whitespace-pre-line break-words text-start text-sm leading-7 text-zinc-600 dark:text-zinc-300">{{ note.body }}</p>
-                <time :datetime="note.updated_at" class="block text-xs text-zinc-600 dark:text-zinc-400">
-                    {{ dateFormatter.format(new Date(note.updated_at)) }}
-                </time>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <label class="flex flex-wrap items-center gap-2 text-xs text-zinc-700 dark:text-zinc-300">
+                        وضعیت بررسی
+                        <select
+                            :value="note.review_status"
+                            :aria-label="'وضعیت بررسی ' + note.title"
+                            :disabled="pending"
+                            class="min-h-9 max-w-full rounded-lg border border-surface-borderLight bg-surface-cardLight px-2 text-sm focus-visible:outline focus-visible:outline-brand-500 disabled:opacity-60 dark:border-surface-borderDark dark:bg-surface-cardDark"
+                            @change="changeReviewStatus(note, $event)"
+                        >
+                            <option v-for="(label, value) in reviewStatuses" :key="value" :value="value">{{ label }}</option>
+                        </select>
+                    </label>
+                    <time :datetime="note.updated_at" class="text-xs text-zinc-600 dark:text-zinc-400">
+                        {{ dateFormatter.format(new Date(note.updated_at)) }}
+                    </time>
+                </div>
             </div>
 
             <details class="relative" @keydown.esc.stop="closeActions">
