@@ -60,6 +60,11 @@ class Project extends Model
         return $this->hasMany(Task::class)->orderBy('order');
     }
 
+    public function notes(): HasMany
+    {
+        return $this->hasMany(ProjectNote::class);
+    }
+
     public function pendingTasks(): HasMany
     {
         return $this->tasks()->active();

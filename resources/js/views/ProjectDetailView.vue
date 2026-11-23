@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProjectStore } from '@/stores/projects';
 import { useTaskStore } from '@/stores/tasks';
 import api from '@/services/api';
 import type { Task } from '@/types/task';
 import TaskBoard from '@/components/task/TaskBoard.vue';
+import ProjectNotesPanel from '@/components/project/ProjectNotesPanel.vue';
 import AppLayout from '@/components/layout/AppLayout.vue';
 import TaskQuickAdd from '@/components/task/TaskQuickAdd.vue';
 import TaskList from '@/components/task/TaskList.vue';
@@ -35,7 +36,9 @@ const taskStore = useTaskStore();
 
 const modeSaving = ref(false);
 const loadError = ref(false);
-let request = 0;
+const taskLoadError = ref(false);
+let projectRequest = 0;
+let taskRequest: AbortController | undefined;
 let loadedProject: string | undefined;
 const isLoadingTasks = ref(true);
 
@@ -65,41 +68,67 @@ const iconComponent = computed(() => {
     }
 });
 
-const loadProjectData = async () => {
+const tabs = [
+    { id: 'tasks', label: 'تسک‌ها' },
+    { id: 'notes', label: 'یادداشت‌ها' },
+] as const;
+type ProjectTab = (typeof tabs)[number]['id'];
+const activeTab = computed<ProjectTab>(() => route.query.tab === 'notes' ? 'notes' : 'tasks');
+
+async function selectTab(tab: ProjectTab) {
+    if (tab === activeTab.value) return;
+    await router.push({ query: { ...route.query, tab: tab === 'notes' ? 'notes' : undefined }, hash: route.hash });
+}
+
+function handleTabKey(event: KeyboardEvent, current: ProjectTab) {
+    const other = current === 'tasks' ? 'notes' : 'tasks';
+    const target = {
+        ArrowLeft: other, ArrowRight: other, Home: 'tasks', End: 'notes',
+    }[event.key] as ProjectTab | undefined;
+    if (!target) return;
+    event.preventDefault();
+    document.getElementById(`project-tab-${target}`)?.focus();
+}
+
+async function loadProject() {
     const uuid = route.params.uuid as string;
-    const revision = ++request;
-    if (!uuid) return;
-    isLoadingTasks.value = loadedProject !== uuid;
+    const request = ++projectRequest;
     loadError.value = false;
+    const result = await projectStore.fetchProject(uuid);
+    if (request === projectRequest) loadError.value = !result;
+}
+
+async function loadTasks() {
+    taskRequest?.abort();
+    if (!project.value || activeTab.value !== 'tasks') return;
+    const { id, uuid } = project.value;
+    const controller = new AbortController();
+    taskRequest = controller;
+    const isCurrent = () => !controller.signal.aborted && route.params.uuid === uuid && activeTab.value === 'tasks';
+
+    isLoadingTasks.value = loadedProject !== uuid;
+    taskLoadError.value = false;
     try {
-        const p = await projectStore.fetchProject(uuid);
-        if (revision !== request) return;
-        if (!p) {
-            loadError.value = true;
-            return;
-        }
         const response = await api.get<{ data: Task[] }>('/tasks', {
-            params: { project_id: p.id },
+            params: { project_id: id },
+            signal: controller.signal,
         });
-        if (revision !== request) return;
+        if (!isCurrent()) return;
         taskStore.tasks = response.data.data;
         loadedProject = uuid;
     } catch {
-        if (revision === request) loadError.value = true;
+        if (isCurrent()) taskLoadError.value = true;
     } finally {
-        if (revision === request) isLoadingTasks.value = false;
+        if (isCurrent()) isLoadingTasks.value = false;
     }
-};
+}
 
-watch(
-    () => [route.params.uuid, taskStore.revision],
-    () => {
-        loadProjectData();
-    }
-);
-
-onMounted(loadProjectData);
-onBeforeUnmount(() => { request++; });
+watch([() => route.params.uuid, () => taskStore.revision], loadProject, { immediate: true });
+watch([() => project.value?.id, activeTab, () => taskStore.revision], (_, __, onCleanup) => {
+    if (!project.value || activeTab.value !== 'tasks') loadedProject = undefined;
+    void loadTasks();
+    onCleanup(() => taskRequest?.abort());
+}, { immediate: true });
 
 const handleToggleFavorite = () => {
     if (project.value) {
@@ -128,7 +157,7 @@ const handleDelete = async () => {
         <!-- Loading State -->
         <p v-if="loadError && !project" role="alert" class="workspace-panel p-5">
             دریافت پروژه ممکن نشد.
-            <button type="button" class="font-semibold underline" @click="loadProjectData">تلاش دوباره</button>
+            <button type="button" class="font-semibold underline" @click="loadProject">تلاش دوباره</button>
         </p>
         <div v-else-if="projectStore.isLoading && !project" class="flex items-center justify-center p-20 text-zinc-400">
             <Loader2 class="w-8 h-8 animate-spin text-brand-500" />
@@ -219,38 +248,73 @@ const handleDelete = async () => {
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <h3 class="text-lg font-bold">تسک‌های پروژه</h3>
-                <div aria-label="نمای پروژه" role="group" class="segmented-control">
-                    <button type="button" :aria-pressed="project.view_mode === 'list'" :disabled="modeSaving" @click="setView('list')">
-                        <List aria-hidden="true" class="size-4" /> لیست
-                    </button>
-                    <button type="button" :aria-pressed="project.view_mode === 'board'" :disabled="modeSaving" @click="setView('board')">
-                        <Columns3 aria-hidden="true" class="size-4" /> کانبان
-                    </button>
+            <div role="tablist" aria-label="بخش‌های پروژه" class="flex gap-4 border-b border-surface-borderLight dark:border-surface-borderDark">
+                <button
+                    v-for="tab in tabs"
+                    :id="'project-tab-' + tab.id"
+                    :key="tab.id"
+                    type="button"
+                    role="tab"
+                    :aria-controls="'project-panel-' + tab.id"
+                    :aria-selected="activeTab === tab.id"
+                    :tabindex="activeTab === tab.id ? 0 : -1"
+                    class="min-h-11 border-b-2 px-3 text-sm font-bold focus-visible:outline focus-visible:outline-brand-500"
+                    :class="activeTab === tab.id
+                        ? 'border-brand-600 text-brand-700 dark:border-brand-400 dark:text-brand-300'
+                        : 'border-transparent text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'"
+                    @click="selectTab(tab.id)"
+                    @keydown="handleTabKey($event, tab.id)"
+                >{{ tab.label }}</button>
+            </div>
+
+            <section
+                v-show="activeTab === 'tasks'"
+                id="project-panel-tasks"
+                role="tabpanel"
+                aria-labelledby="project-tab-tasks"
+                class="space-y-4"
+            >
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h3 class="text-lg font-bold">تسک‌های پروژه</h3>
+                    <div aria-label="نمای پروژه" role="group" class="segmented-control">
+                        <button type="button" :aria-pressed="project.view_mode === 'list'" :disabled="modeSaving" @click="setView('list')">
+                            <List aria-hidden="true" class="size-4" /> لیست
+                        </button>
+                        <button type="button" :aria-pressed="project.view_mode === 'board'" :disabled="modeSaving" @click="setView('board')">
+                            <Columns3 aria-hidden="true" class="size-4" /> کانبان
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <!-- Project Scoped Quick Add -->
-            <div>
-                <TaskQuickAdd :project-id="project.id" />
-            </div>
+                <!-- Project Scoped Quick Add -->
+                <div>
+                    <TaskQuickAdd :project-id="project.id" />
+                </div>
 
-            <!-- Tasks Loading or List -->
-            <div v-if="isLoadingTasks" class="flex items-center justify-center p-12 text-zinc-400">
-                <Loader2 class="w-7 h-7 animate-spin text-brand-500" />
-            </div>
+                <!-- Tasks Loading or List -->
+                <div v-if="isLoadingTasks" class="flex items-center justify-center p-12 text-zinc-400">
+                    <Loader2 class="w-7 h-7 animate-spin text-brand-500" />
+                </div>
 
-            <p v-else-if="loadError" role="alert" class="workspace-panel p-5">
-                دریافت تسک‌ها ممکن نشد.
-                <button type="button" class="font-semibold underline" @click="loadProjectData">تلاش دوباره</button>
-            </p>
-            <TaskBoard v-else-if="project.view_mode === 'board'" :key="project.uuid" :tasks="taskStore.tasks" />
-            <TaskList
-                v-else
-                :tasks="taskStore.tasks"
-                empty-title="هنوز تسکی در این پروژه ثبت نشده است"
-                empty-description="با استفاده از فرم ثبت سریع بالا، اولین کار این پروژه را اضافه کنید."
-            />
+                <p v-else-if="taskLoadError" role="alert" class="workspace-panel p-5">
+                    دریافت تسک‌ها ممکن نشد.
+                    <button type="button" class="font-semibold underline" @click="loadTasks">تلاش دوباره</button>
+                </p>
+                <TaskBoard v-else-if="project.view_mode === 'board'" :key="project.uuid" :tasks="taskStore.tasks" />
+                <TaskList
+                    v-else
+                    :tasks="taskStore.tasks"
+                    empty-title="هنوز تسکی در این پروژه ثبت نشده است"
+                    empty-description="با استفاده از فرم ثبت سریع بالا، اولین کار این پروژه را اضافه کنید."
+                />
+            </section>
+            <section
+                v-show="activeTab === 'notes'"
+                id="project-panel-notes"
+                role="tabpanel"
+                aria-labelledby="project-tab-notes"
+            >
+                <ProjectNotesPanel v-if="activeTab === 'notes'" :key="project.uuid" :project-uuid="project.uuid" />
+            </section>
         </div>
     </AppLayout>
 </template>

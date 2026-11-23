@@ -46,6 +46,8 @@ const handleInput = (e: Event) => {
             :rows="rows"
             :placeholder="placeholder"
             :disabled="disabled"
+            :aria-invalid="!!error"
+            :aria-describedby="error || hint ? textareaId + '-message' : undefined"
             @input="handleInput"
             class="w-full px-3.5 py-2.5 rounded-xl border bg-surface-subtleLight dark:bg-surface-subtleDark text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed resize-y"
             :class="[
@@ -55,10 +57,10 @@ const handleInput = (e: Event) => {
             ]"
         ></textarea>
 
-        <p v-if="error" class="mt-1 text-[11px] text-rose-500 font-medium">
+        <p v-if="error" :id="textareaId + '-message'" role="status" class="mt-1 text-[11px] text-rose-500 font-medium">
             {{ error }}
         </p>
-        <p v-else-if="hint" class="mt-1 text-[11px] text-zinc-400">
+        <p v-else-if="hint" :id="textareaId + '-message'" class="mt-1 text-[11px] text-zinc-400">
             {{ hint }}
         </p>
     </div>

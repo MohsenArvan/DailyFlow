@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\ExportController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ProjectController;
+use App\Http\Controllers\Api\V1\ProjectNoteController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\SubtaskController;
 use App\Http\Controllers\Api\V1\TaskController;
@@ -69,4 +70,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/projects/reorder', [ProjectController::class, 'reorder']);
     Route::post('/projects/{project}/favorite', [ProjectController::class, 'toggleFavorite']);
     Route::apiResource('projects', ProjectController::class);
+    Route::prefix('projects/{project}/notes')->controller(ProjectNoteController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::patch('/{noteUuid}', 'update')->whereUuid('noteUuid');
+        Route::delete('/{noteUuid}', 'destroy')->whereUuid('noteUuid');
+    });
 });
